@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超级工具箱 · 10合1实用工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #eef2f7;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 2rem;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .tool-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .tool-card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #4a5568;
+            border-left: 4px solid #667eea;
+            padding-left: 0.75rem;
+        }
+
+        /* 通用样式 */
+        .time {
+            font-size: 2rem;
+            font-weight: 600;
+            text-align: center;
+            color: #2d3748;
+            font-family: monospace;
+        }
+        .date {
+            text-align: center;
+            color: #718096;
+            margin: 0.5rem 0;
+        }
+        .quote {
+            text-align: center;
+            color: #4a5568;
+            font-style: italic;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        .timer-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            font-family: monospace;
+            margin: 1rem 0;
+        }
+        .timer-buttons, .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 2rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        button:hover {
+            opacity: 0.8;
+            transform: scale(0.95);
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-success { background: #48bb78; color: white; }
+        .btn-warning { background: #ed8936; color: white; }
+        .btn-secondary { background: #718096; color: white; }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+        }
+        .result-box {
+            background: #f7fafc;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            margin: 0.5rem 0;
+            word-break: break-all;
+            font-size: 0.9rem;
+        }
+        .color-preview {
+            width: 100%;
+            height: 60px;
+            border-radius: 0.75rem;
+            margin: 0.5rem 0;
+            border: 1px solid #e2e8f0;
+        }
+        .stats {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 2rem;
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2rem;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .back-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* 计算器样式 */
+        .calculator {
+            width: 100%;
+        }
+        .calc-display {
+            background: #f7fafc;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            font-size: 1.2rem;
+            text-align: right;
+            font-family: monospace;
+            margin-bottom: 0.75rem;
+            min-height: 60px;
+            word-break: break-all;
+        }
+        .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+        }
+        .calc-btn {
+            padding: 0.75rem;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .calc-btn:hover {
+            background: #cbd5e0;
+            transform: scale(0.95);
+        }
+        .calc-btn.operator {
+            background: #667eea;
+            color: white;
+        }
+        .calc-btn.equals {
+            background: #48bb78;
+            color: white;
+        }
+        .calc-btn.clear {
+            background: #ef4444;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 640px) {
+    body {
+        padding: 1rem;
+    }
+    h1 {
+        font-size: 1.5rem;
+    }
+    .subtitle {
+        font-size: 0.8rem;
+    }
+    .login-box {
+        margin: 50px auto;
+        padding: 1.5rem;
+    }
+    .tabs {
+        gap: 0.3rem;
+    }
+    .tab-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.7rem;
+    }
+    .tab-content {
+        padding: 1rem;
+        overflow-x: auto;
+    }
+    table {
+        font-size: 0.8rem;
+        min-width: 500px;
+    }
+    th, td {
+        padding: 0.5rem;
+    }
+    .edit-btn, .delete-btn {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.7rem;
+    }
+    .add-btn {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+    .modal-content {
+        width: 95%;
+        padding: 1rem;
+    }
+    .form-group label {
+        font-size: 0.85rem;
+    }
+    .form-group input, .form-group textarea {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🛠️ 超级工具箱</h1>
+    <div class="subtitle">10合1 · 实用小工具集合</div>
+
+    <div class="tools-grid">
+        <!-- 1. 时间与格言 -->
+        <div class="tool-card"><h2>⏰ 时间与格言</h2>
+            <div class="time" id="time">--:--:--</div><div class="date" id="date"></div>
+            <div class="quote" id="quote">✨ 加载中...</div>
+        </div>
+
+        <!-- 2. 番茄钟 -->
+        <div class="tool-card"><h2>🍅 番茄钟</h2>
+            <div class="timer-display" id="timerDisplay">25:00</div>
+            <div class="timer-buttons">
+                <button class="btn-success" id="timerStart">开始</button>
+                <button class="btn-warning" id="timerPause">暂停</button>
+                <button class="btn-secondary" id="timerReset">重置</button>
+            </div>
+        </div>
+
+        <!-- 3. 密码生成器 -->
+        <div class="tool-card"><h2>🔐 密码生成器</h2>
+            <div class="result-box" id="passwordDisplay">点击生成</div>
+            <div class="btn-group">
+                <button class="btn-primary" id="genPassword">生成密码</button>
+                <button class="btn-primary" id="copyPassword">复制</button>
+            </div>
+        </div>
+
+        <!-- 4. 字数统计 -->
+        <div class="tool-card"><h2>📝 字数统计</h2>
+            <textarea rows="3" id="textInput" placeholder="在这里输入文字..."></textarea>
+            <div class="stats"><span>📊 字数: <strong id="wordCount">0</strong></span><span>🔤 字符: <strong id="charCount">0</strong></span></div>
+        </div>
+
+        <!-- 5. 天气 -->
+        <div class="tool-card"><h2>🌤️ 今日天气</h2>
+            <div class="weather-info"><div class="timer-display" id="weatherTemp" style="font-size:1.8rem">--°C</div>
+            <div id="weatherDesc">加载中...</div><div id="weatherLocation">📍 获取位置</div>
+            <button class="btn-secondary" id="refreshWeather">🔄 刷新</button></div>
+        </div>
+
+        <!-- 6. 单位换算 -->
+        <div class="tool-card"><h2>📏 单位换算</h2>
+            <select id="convertType"><option value="length">长度 (米↔英尺)</option><option value="weight">重量 (千克↔磅)</option><option value="temp">温度 (℃↔℉)</option></select>
+            <input type="number" id="convertValue" placeholder="输入数值">
+            <div class="result-box" id="convertResult">结果: </div>
+        </div>
+
+        <!-- 7. 随机数生成器 -->
+        <div class="tool-card"><h2>🎲 随机数生成器</h2>
+            <div class="btn-group"><input type="number" id="randomMin" placeholder="最小值" value="1" style="width:45%">
+            <input type="number" id="randomMax" placeholder="最大值" value="100" style="width:45%"></div>
+            <button class="btn-primary" id="generateRandom" style="width:100%">生成随机数</button>
+            <div class="result-box" id="randomResult">结果: --</div>
+        </div>
+
+        <!-- 8. 高级计算器（替换Base64） -->
+        <div class="tool-card"><h2>🧮 高级计算器</h2>
+            <div class="calculator">
+                <div class="calc-display" id="calcDisplay">0</div>
+                <div class="calc-buttons">
+                    <button class="calc-btn clear" data-calc="clear">C</button>
+                    <button class="calc-btn" data-calc="(">(</button>
+                    <button class="calc-btn" data-calc=")">)</button>
+                    <button class="calc-btn operator" data-calc="/">÷</button>
+                    
+                    <button class="calc-btn" data-calc="7">7</button>
+                    <button class="calc-btn" data-calc="8">8</button>
+                    <button class="calc-btn" data-calc="9">9</button>
+                    <button class="calc-btn operator" data-calc="*">×</button>
+                    
+                    <button class="calc-btn" data-calc="4">4</button>
+                    <button class="calc-btn" data-calc="5">5</button>
+                    <button class="calc-btn" data-calc="6">6</button>
+                    <button class="calc-btn operator" data-calc="-">-</button>
+                    
+                    <button class="calc-btn" data-calc="1">1</button>
+                    <button class="calc-btn" data-calc="2">2</button>
+                    <button class="calc-btn" data-calc="3">3</button>
+                    <button class="calc-btn operator" data-calc="+">+</button>
+                    
+                    <button class="calc-btn" data-calc="0">0</button>
+                    <button class="calc-btn" data-calc=".">.</button>
+                    <button class="calc-btn equals" data-calc="=">=</button>
+                    <button class="calc-btn operator" data-calc="%">%</button>
+                </div>
+                <div class="result-box" id="calcResult" style="margin-top:0.75rem;">结果: 0</div>
+            </div>
+        </div>
+
+        <!-- 9. 颜色选择器 -->
+        <div class="tool-card"><h2>🎨 颜色选择器</h2>
+            <input type="color" id="colorPicker" value="#667eea">
+            <div class="color-preview" id="colorPreview" style="background:#667eea"></div>
+            <div class="result-box" id="colorCode">颜色代码: #667eea</div>
+        </div>
+
+        <!-- 10. 倒计时器 -->
+        <div class="tool-card"><h2>⏳ 倒计时器</h2>
+            <input type="date" id="targetDate">
+            <button class="btn-primary" id="startCountdown">开始倒计时</button>
+            <div class="timer-display" id="countdownDisplay" style="font-size:1.5rem">--天 --时 --分</div>
+        </div>
+    </div>
+
+    <a href="index.html" class="back-link">← 返回个人主页</a>
+</div>
+
+<script>
+    // ========== 1. 时间格言 ==========
+    const quotes = ["我们日复一日度过的所谓日常，可能就是连续不断发生的奇迹。","生活不是等待风暴过去，而是学会在雨中翩翩起舞。","种一棵树最好的时间是十年前，其次是现在。","保持热爱，奔赴山海。","你所看到的惊鸿，都曾被平庸磨砺。","每一步都在向前，就是最好的路。"];
+    function updateTime() { const now=new Date(), bj=new Date(now.getTime()+8*3600000); document.getElementById('time').innerText=bj.toISOString().slice(11,19); const y=bj.getUTCFullYear(),m=String(bj.getUTCMonth()+1).padStart(2,'0'),d=String(bj.getUTCDate()).padStart(2,'0'),w=['周日','周一','周二','周三','周四','周五','周六'][bj.getUTCDay()]; document.getElementById('date').innerText=`${y}.${m}.${d} ${w}`; }
+    function setQuote(){ document.getElementById('quote').innerText=`“${quotes[Math.floor(Math.random()*quotes.length)]}”`; }
+    updateTime(); setQuote(); setInterval(updateTime,1000); setInterval(setQuote,3600000);
+
+    // ========== 2. 番茄钟 ==========
+    let timer=null, seconds=25*60, running=false;
+    function updateTimer(){ let m=Math.floor(seconds/60), s=seconds%60; document.getElementById('timerDisplay').innerText=`${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }
+    function startTimer(){ if(running)return; running=true; timer=setInterval(()=>{ if(seconds>0){ seconds--; updateTimer(); } if(seconds===0){ clearInterval(timer); running=false; alert('🍅 番茄钟完成！'); } },1000); }
+    function pauseTimer(){ if(timer){ clearInterval(timer); running=false; } }
+    function resetTimer(){ pauseTimer(); seconds=25*60; updateTimer(); }
+    document.getElementById('timerStart').onclick=startTimer; document.getElementById('timerPause').onclick=pauseTimer; document.getElementById('timerReset').onclick=resetTimer; updateTimer();
+
+    // ========== 3. 密码生成器 ==========
+    function genPwd(){ let c='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*', p=''; for(let i=0;i<12;i++) p+=c[Math.floor(Math.random()*c.length)]; return p; }
+    document.getElementById('genPassword').onclick=()=>{ document.getElementById('passwordDisplay').innerText=genPwd(); };
+    document.getElementById('copyPassword').onclick=()=>{ let p=document.getElementById('passwordDisplay').innerText; if(p!='点击生成'){ navigator.clipboard.writeText(p); alert('✅ 已复制'); } };
+
+    // ========== 4. 字数统计 ==========
+    let inp=document.getElementById('textInput'), wc=document.getElementById('wordCount'), cc=document.getElementById('charCount');
+    inp.oninput=()=>{ let t=inp.value; cc.innerText=t.length; wc.innerText=t.trim()?t.trim().split(/\s+/).length:0; };
+
+    // ========== 5. 天气 ==========
+    async function getWeather(){ try{ let r=await fetch('https://wttr.in/?format=j1'), d=await r.json(), c=d.current_condition[0]; document.getElementById('weatherTemp').innerHTML=c.temp_C+'°C'; document.getElementById('weatherDesc').innerText=c.weatherDesc[0].value; document.getElementById('weatherLocation').innerText='📍 '+d.nearest_area[0].areaName[0].value; }catch(e){ document.getElementById('weatherDesc').innerText='获取失败'; } }
+    getWeather(); document.getElementById('refreshWeather').onclick=getWeather;
+
+    // ========== 6. 单位换算 ==========
+    function convert(){ let type=document.getElementById('convertType').value, val=parseFloat(document.getElementById('convertValue').value), res=''; if(isNaN(val)){ document.getElementById('convertResult').innerText='请输入数字'; return; }
+        if(type=='length') res=`${val} 米 = ${(val*3.28084).toFixed(2)} 英尺 | ${val} 英尺 = ${(val/3.28084).toFixed(2)} 米`;
+        else if(type=='weight') res=`${val} 千克 = ${(val*2.20462).toFixed(2)} 磅 | ${val} 磅 = ${(val/2.20462).toFixed(2)} 千克`;
+        else res=`${val} °C = ${(val*9/5+32).toFixed(1)} °F | ${val} °F = ${((val-32)*5/9).toFixed(1)} °C`;
+        document.getElementById('convertResult').innerText='结果: '+res;
+    }
+    document.getElementById('convertValue').oninput=convert; document.getElementById('convertType').onchange=convert;
+
+    // ========== 7. 随机数 ==========
+    document.getElementById('generateRandom').onclick=()=>{ let min=parseInt(document.getElementById('randomMin').value)||1, max=parseInt(document.getElementById('randomMax').value)||100; if(min>max){[min,max]=[max,min];} let r=Math.floor(Math.random()*(max-min+1))+min; document.getElementById('randomResult').innerText=`结果: ${r}`; };
+
+    // ========== 8. 高级计算器 ==========
+    let calcExpression = '';
+    const calcDisplay = document.getElementById('calcDisplay');
+    const calcResultDiv = document.getElementById('calcResult');
+    
+    function updateCalcDisplay() {
+        calcDisplay.innerText = calcExpression || '0';
+    }
+    
+    function evaluateExpression() {
+        if (!calcExpression) {
+            calcResultDiv.innerText = '结果: 0';
+            return;
+        }
+        try {
+            // 替换显示的运算符为JS运算符
+            let expr = calcExpression.replace(/×/g, '*').replace(/÷/g, '/');
+            // 使用 Function 计算（比 eval 更安全）
+            const result = new Function('return (' + expr + ')')();
+            if (isNaN(result) || !isFinite(result)) {
+                calcResultDiv.innerText = '结果: 错误';
+            } else {
+                // 保留6位小数
+                const finalResult = Math.round(result * 1000000) / 1000000;
+                calcResultDiv.innerText = '结果: ' + finalResult;
+            }
+        } catch (e) {
+            calcResultDiv.innerText = '结果: 表达式错误';
+        }
+    }
+    
+    // 绑定计算器按钮
+    document.querySelectorAll('[data-calc]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const action = btn.getAttribute('data-calc');
+            if (action === 'clear') {
+                calcExpression = '';
+                updateCalcDisplay();
+                calcResultDiv.innerText = '结果: 0';
+            } else if (action === '=') {
+                evaluateExpression();
+            } else {
+                calcExpression += action;
+                updateCalcDisplay();
+                // 实时计算预览
+                evaluateExpression();
+            }
+        });
+    });
+
+    // ========== 9. 颜色选择器 ==========
+    let cp=document.getElementById('colorPicker'), cv=document.getElementById('colorPreview'), cc2=document.getElementById('colorCode');
+    cp.oninput=()=>{ let c=cp.value; cv.style.background=c; cc2.innerText=`颜色代码: ${c}`; };
+
+    // ========== 10. 倒计时器 ==========
+    let countdownInterval=null;
+    function updateCountdown(targetDate){ let now=new Date(), diff=targetDate-now; if(diff<=0){ document.getElementById('countdownDisplay').innerText='🎉 时间到！'; if(countdownInterval) clearInterval(countdownInterval); return; }
+        let days=Math.floor(diff/(1000*60*60*24)), hours=Math.floor((diff%(1000*60*60*24))/(1000*60*60)), mins=Math.floor((diff%(1000*60*60))/(1000*60));
+        document.getElementById('countdownDisplay').innerText=`${days}天 ${hours}时 ${mins}分`;
+    }
+    document.getElementById('startCountdown').onclick=()=>{ let dateStr=document.getElementById('targetDate').value; if(!dateStr){ alert('请选择日期'); return; } let target=new Date(dateStr); if(countdownInterval) clearInterval(countdownInterval); updateCountdown(target); countdownInterval=setInterval(()=>updateCountdown(target),60000); };
+</script>
+
+<script>
+    // ========== 源码防护 ==========
+    // 1. 禁用右键菜单
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        return false;
+    });
+    
+    // 2. 禁用开发者工具快捷键
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F12') {
+            e.preventDefault();
+            return false;
+        }
+        if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
+            e.preventDefault();
+            return false;
+        }
+        if (e.ctrlKey && e.key === 'u') {
+            e.preventDefault();
+            return false;
+        }
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // 3. 检测开发者工具
+    setInterval(function() {
+        const start = performance.now();
+        debugger;
+        const end = performance.now();
+        if (end - start > 100) {
+            document.body.innerHTML = '<div style="text-align:center; padding:100px;"><h1>🚫 调试器检测到</h1><p>请关闭开发者工具后刷新页面</p></div>';
+        }
+    }, 1000);
+    
+
+</script>
+
+</body>
+</html>

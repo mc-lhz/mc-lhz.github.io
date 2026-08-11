@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> 超级无敌函数图像生成器·数学可视化</title>
+    <script src="vendor/function-plot.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #eef2f7;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+            font-size: 1.8rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+            align-items: flex-end;
+        }
+
+        .input-group {
+            flex: 2;
+            min-width: 200px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            font-size: 0.95rem;
+            font-family: monospace;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .range-group {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .examples {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .example-btn {
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 0.4rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        .example-btn:hover {
+            background: #cbd5e0;
+            transform: none;
+        }
+
+        .graph-container {
+            width: 100%;
+            height: 450px;
+            margin: 1rem 0;
+            background: white;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+
+        .info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f7fafc;
+            border-radius: 0.75rem;
+            font-size: 0.85rem;
+            color: #4b5563;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5rem;
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.75rem;
+        }
+
+        @media (max-width: 640px) {
+            .input-area {
+                flex-direction: column;
+            }
+            .graph-container {
+                height: 350px;
+            }
+        }
+        @media (max-width: 640px) {
+    body {
+        padding: 1rem;
+    }
+    h1 {
+        font-size: 1.5rem;
+    }
+    .subtitle {
+        font-size: 0.8rem;
+    }
+    .card {
+        padding: 1rem;
+    }
+    .input-area {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    .input-group, .range-group {
+        width: 100%;
+    }
+    .input-group input, .range-group input {
+        padding: 0.6rem;
+        font-size: 0.85rem;
+    }
+    button {
+        width: 100%;
+        padding: 0.6rem;
+    }
+    .examples {
+        gap: 0.4rem;
+    }
+    .example-btn {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.7rem;
+    }
+    .graph-container {
+        height: 300px;
+    }
+    .info {
+        font-size: 0.75rem;
+        padding: 0.75rem;
+    }
+    .back-link {
+        font-size: 0.8rem;
+    }
+}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>📈 函数图像生成器</h1>
+        <div class="subtitle">输入函数表达式，实时绘制图像</div>
+
+        <div class="examples">
+            <span style="font-size:0.8rem; color:#6b7280;">示例：</span>
+            <button class="example-btn" data-func="sin(x)">sin(x)</button>
+            <button class="example-btn" data-func="cos(x)">cos(x)</button>
+            <button class="example-btn" data-func="tan(x)">tan(x)</button>
+            <button class="example-btn" data-func="x^2">x²</button>
+            <button class="example-btn" data-func="sqrt(x)">√x</button>
+            <button class="example-btn" data-func="x^3 - 3*x">x³-3x</button>
+            <button class="example-btn" data-func="exp(-x^2)">e^(-x²)</button>
+            <button class="example-btn" data-func="1/x">1/x</button>
+        </div>
+
+        <div class="input-area">
+            <div class="input-group">
+                <label>📐 函数表达式 <span style="color:#ef4444;">*</span></label>
+                <input type="text" id="funcInput" placeholder="例如: sin(x), x^2, x^3 - 2*x" value="sin(x)">
+            </div>
+            <div class="range-group">
+                <label>📏 X轴范围</label>
+                <input type="text" id="xRange" placeholder="-10 到 10" value="-10,10">
+            </div>
+            <div class="range-group">
+                <label>📏 Y轴范围</label>
+                <input type="text" id="yRange" placeholder="自动" value="auto">
+            </div>
+            <button id="plotBtn">🎨 绘制图像</button>
+        </div>
+
+        <div class="graph-container" id="graph"></div>
+
+        <div class="info">
+            <strong>💡 使用说明：</strong><br>
+            • 支持运算：+ - * / ^ ( )<br>
+            • 支持函数：sin, cos, tan, sqrt, exp, log, abs, asin, acos, atan<br>
+            • X轴范围格式：min,max（如 -5,5）<br>
+            • Y轴范围留空或填 auto 自动适配
+        </div>
+    </div>
+
+    <a href="index.html" class="back-link">← 返回个人主页</a>
+    <div class="footer">© 2026 Factorization · 心若有所向往 · 何惧道阻且长</div>
+</div>
+
+<script>
+    // 函数图像绘制
+    let currentPlot = null;
+    const graphDiv = document.getElementById('graph');
+
+    // 解析范围
+    function parseRange(rangeStr, defaultValue) {
+        if (!rangeStr || rangeStr === 'auto') return defaultValue;
+        const parts = rangeStr.split(',').map(Number);
+        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+            return parts;
+        }
+        return defaultValue;
+    }
+
+    // 绘制图像
+    function plotFunction() {
+        const funcStr = document.getElementById('funcInput').value.trim();
+        const xRangeStr = document.getElementById('xRange').value.trim();
+        const yRangeStr = document.getElementById('yRange').value.trim();
+
+        if (!funcStr) {
+            alert('请输入函数表达式');
+            return;
+        }
+
+        const xRange = parseRange(xRangeStr, [-10, 10]);
+        let yRange = parseRange(yRangeStr, null);
+
+        try {
+            // 准备绘制选项
+            const options = {
+                target: '#graph',
+                width: graphDiv.clientWidth || 800,
+                height: 450,
+                xAxis: { domain: xRange },
+                yAxis: { domain: yRange || undefined },
+                grid: true,
+                data: [{
+                    fn: funcStr,
+                    sampler: 'builtIn',  // 使用内置采样器，更稳定
+                    graphType: 'polyline',
+                    color: '#667eea',
+                    lineWidth: 2
+                }]
+            };
+
+            // 如果yRange为null，让function-plot自动计算
+            if (!yRange) {
+                delete options.yAxis.domain;
+            }
+
+            // 绘制
+            currentPlot = functionPlot(options);
+            
+        } catch (error) {
+            console.error('绘制错误:', error);
+            alert('函数表达式错误，请检查格式');
+        }
+    }
+
+    // 示例按钮
+    document.querySelectorAll('.example-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const func = btn.getAttribute('data-func');
+            document.getElementById('funcInput').value = func;
+            plotFunction();
+        });
+    });
+
+    // 绘制按钮
+    document.getElementById('plotBtn').addEventListener('click', plotFunction);
+
+    // 窗口大小改变时重新绘制
+    window.addEventListener('resize', () => {
+        if (currentPlot) {
+            setTimeout(plotFunction, 100);
+        }
+    });
+
+    // 页面加载时自动绘制
+    window.addEventListener('load', () => {
+        setTimeout(plotFunction, 100);
+    });
+</script>
+
+<script>
+    // ========== 源码防护 ==========
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        return false;
+    });
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F12') {
+            e.preventDefault();
+            return false;
+        }
+        if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
+            e.preventDefault();
+            return false;
+        }
+        if (e.ctrlKey && e.key === 'u') {
+            e.preventDefault();
+            return false;
+        }
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    setInterval(function() {
+        const start = performance.now();
+        debugger;
+        const end = performance.now();
+        if (end - start > 100) {
+            document.body.innerHTML = '<div style="text-align:center; padding:100px;"><h1>🚫 调试器检测到</h1><p>请关闭开发者工具后刷新页面</p></div>';
+        }
+    }, 1000);
+    
+    document.addEventListener('selectstart', function(e) {
+        e.preventDefault();
+        return false;
+    });
+    document.addEventListener('copy', function(e) {
+        e.preventDefault();
+        return false;
+    });
+</script>
+</body>
+</html>

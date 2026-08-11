@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>活动报名 · 起床战争大赛</title>
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <!-- Supabase JS 库 -->
+    <script src="vendor/supabase.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #eef2f7;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+            font-size: 1.8rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .event-info {
+            background: #f3f4f6;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .event-info p {
+            color: #4b5563;
+            margin: 0.25rem 0;
+        }
+
+        .member-warning {
+            background: #fee2e2;
+            border-radius: 1rem;
+            padding: 0.75rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            border-left: 4px solid #ef4444;
+        }
+
+        .member-warning p {
+            color: #991b1b;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .member-warning i {
+            margin-right: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        label .required {
+            color: #ef4444;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            margin-top: 1rem;
+            text-align: center;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            display: none;
+        }
+
+        .message.success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5rem;
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>📋 起床战争大赛</h1>
+        <div class="subtitle">填写信息，立即报名</div>
+
+        <div class="event-info">
+            <p>📅 时间：2026年4月8日 16:50-18:00</p>
+            <p>📍 地点：社团课 · 电子阅览室</p>
+            <p>🎮 欢迎你的加入！</p>
+        </div>
+
+        <div class="member-warning">
+            <p><i class="fas fa-exclamation-triangle"></i> 仅限本社团成员参与 <i class="fas fa-exclamation-triangle"></i></p>
+            <p style="font-size: 0.8rem; margin-top: 0.25rem;">非社团成员报名无效</p>
+        </div>
+
+        <form id="signupForm">
+            <div class="form-group">
+                <label>班级 <span class="required">*</span></label>
+                <input type="text" id="class" required placeholder="例：高一(1)班">
+            </div>
+
+            <div class="form-group">
+                <label>姓名 <span class="required">*</span></label>
+                <input type="text" id="name" required placeholder="你的姓名">
+            </div>
+
+            <div class="form-group">
+                <label>QQ号 <span class="required">*</span></label>
+                <input type="text" id="qq" required placeholder="你的QQ号">
+            </div>
+
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" id="email" placeholder="your@email.com（选填）">
+            </div>
+
+            <div class="form-group">
+                <label>电话</label>
+                <input type="tel" id="phone" placeholder="你的手机号码（选填）">
+            </div>
+
+            <div class="form-group">
+                <label>备注</label>
+                <textarea id="notes" rows="2" placeholder="其他想说的话"></textarea>
+            </div>
+
+            <button type="submit" id="submitBtn">立即报名 ✨</button>
+        </form>
+
+        <div id="formMessage" class="message"></div>
+    </div>
+
+    <a href="index.html" class="back-link">← 返回个人主页</a>
+    <div class="footer">© 2026 Factorization · 心若有所向往 · 何惧道阻且长</div>
+</div>
+
+<script>
+    (function() {
+        // Supabase 配置
+        const SUPABASE_URL = 'https://pdbfinlvocsggkuslkqv.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkYmZpbmx2b2NzZ2drdXNsa3F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3Mzg0NzcsImV4cCI6MjA5MDMxNDQ3N30.q8Dpw_NjNDHEFMipdBEzzpE73yZcg_xuc25yslQFCu4';
+
+        // 创建 Supabase 客户端
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const form = document.getElementById('signupForm');
+        const messageDiv = document.getElementById('formMessage');
+
+        // 显示提示消息
+        function showMessage(msg, type) {
+            messageDiv.textContent = msg;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+                messageDiv.className = 'message';
+            }, 5000);
+        }
+
+        // 表单提交
+        if (form) {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // 获取表单数据
+                const className = document.getElementById('class').value.trim();
+                const name = document.getElementById('name').value.trim();
+                const qq = document.getElementById('qq').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+                const notes = document.getElementById('notes').value.trim();
+                
+                // 验证必填项
+                if (!className || !name || !qq) {
+                    showMessage('请填写班级、姓名和QQ号', 'error');
+                    return;
+                }
+                
+                // 禁用按钮
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.disabled = true;
+                submitBtn.textContent = '提交中...';
+                
+                try {
+                    // 提交到 Supabase
+                    const { data, error } = await supabase
+                        .from('signups')
+                        .insert([
+                            { 
+                                class: className,
+                                name: name, 
+                                qq: qq,
+                                email: email || null,
+                                phone: phone || null,
+                                notes: notes || null
+                            }
+                        ]);
+                    
+                    if (error) {
+                        console.error('Supabase错误:', error);
+                        throw error;
+                    }
+                    
+                    // 报名成功
+                    showMessage('✅ 报名成功！我们会尽快联系你~', 'success');
+                    form.reset();
+                    
+                } catch (error) {
+                    console.error('报名失败:', error);
+                    showMessage('❌ 提交失败：' + (error.message || '请稍后重试'), 'error');
+                } finally {
+                    // 恢复按钮
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '立即报名 ✨';
+                }
+            });
+        } else {
+            console.error('找不到表单元素 signupForm');
+        }
+    })();
+</script>
+
+<script>
+    // ========== 源码防护 ==========
+    // 1. 禁用右键菜单
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        return false;
+    });
+    
+    // 2. 禁用开发者工具快捷键
+    document.addEventListener('keydown', function(e) {
+        // F12
+        if (e.key === 'F12') {
+            e.preventDefault();
+            return false;
+        }
+        // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C
+        if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
+            e.preventDefault();
+            return false;
+        }
+        // Ctrl+U (查看源码)
+        if (e.ctrlKey && e.key === 'u') {
+            e.preventDefault();
+            return false;
+        }
+        // Ctrl+S (保存页面)
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // 3. 检测开发者工具（打开后清空页面）
+    setInterval(function() {
+        const start = performance.now();
+        debugger;
+        const end = performance.now();
+        if (end - start > 100) {
+            document.body.innerHTML = '<div style="text-align:center; padding:100px;"><h1>🚫 调试器检测到</h1><p>请关闭开发者工具后刷新页面</p></div>';
+        }
+    }, 1000);
+    
+</script>
+
+</body>
+</html>

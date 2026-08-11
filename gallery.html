@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>月考优秀作答展示 · 图片画廊</title>
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <script src="vendor/supabase.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            background: #eef2f7;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            padding: 2rem 1rem;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 2rem;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .gallery-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 1rem;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .gallery-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 30px rgba(0,0,0,0.3);
+        }
+
+        .gallery-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+            cursor: pointer;
+        }
+
+        .gallery-card .info { padding: 1rem; }
+
+        .gallery-card h3 {
+            font-size: 1rem;
+            color: #4a5568;
+            margin-bottom: 0.25rem;
+        }
+
+        .gallery-card p {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-bottom: 0.75rem;
+        }
+
+        .like-area {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .like-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            padding: 0.25rem 0.5rem;
+            border-radius: 2rem;
+        }
+
+        .like-btn:hover { transform: scale(1.05); }
+        .like-btn.liked { color: #e53e3e; }
+        .like-btn:not(.liked) { color: #a0aec0; }
+
+        .like-count {
+            font-size: 0.9rem;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 0.5rem;
+        }
+
+        .modal .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            background: rgba(0,0,0,0.5);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal .close:hover { background: rgba(255,255,255,0.3); }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 2rem;
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2rem;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .back-link:hover { background: rgba(255,255,255,0.3); }
+
+        .add-image-btn {
+            display: block;
+            margin: 1rem auto;
+            padding: 0.75rem 1.5rem;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 2rem;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .add-image-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 1rem; }
+            h1 { font-size: 1.5rem; }
+            .subtitle { font-size: 0.8rem; }
+            .gallery-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .gallery-card img { height: 180px; }
+            .like-btn { font-size: 0.9rem; }
+            .like-count { font-size: 0.8rem; }
+            .back-link { font-size: 0.8rem; padding: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📚 月考优秀作答展示</h1>
+    <div class="subtitle">点击图片放大查看 | 为喜欢的作品点赞 ❤️</div>
+    <div class="gallery-grid" id="galleryGrid"></div>
+    
+    <button class="add-image-btn" id="addImageBtn">➕ 添加新图片</button>
+    
+    <a href="index.html" class="back-link">← 返回个人主页</a>
+</div>
+
+<div class="modal" id="imageModal">
+    <span class="close" id="closeModal">&times;</span>
+    <img id="modalImage" src="" alt="大图预览">
+</div>
+
+<script>
+    (function() {
+        // Supabase 配置
+        const SUPABASE_URL = 'https://pdbfinlvocsggkuslkqv.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkYmZpbmx2b2NzZ2drdXNsa3F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3Mzg0NzcsImV4cCI6MjA5MDMxNDQ3N30.q8Dpw_NjNDHEFMipdBEzzpE73yZcg_xuc25yslQFCu4';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // 图片数据
+        let images = [
+            { id: 0, url: "/images/gallery/a1.jpg", title: "优秀作答 01", desc: "原作者来了" },
+            { id: 1, url: "/images/gallery/a2.jpg", title: "优秀作答 02", desc: "语文 · 作文高分卷 · 立意深刻" },
+            { id: 2, url: "/images/gallery/a3.jpg", title: "优秀作答 03", desc: "图片来源于段群" },
+            { id: 3, url: "/images/gallery/a4.jpg", title: "优秀作答 04", desc: "莎士比亚转世" }
+        ];
+
+        let likesData = {};
+        let userLiked = [];
+
+        // 获取或生成用户ID
+        function getUserId() {
+            let userId = localStorage.getItem('gallery_user_id');
+            if (!userId) {
+                userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('gallery_user_id', userId);
+            }
+            return userId;
+        }
+
+        // 从 Supabase 加载点赞数据
+        async function loadLikesFromSupabase() {
+            try {
+                const { data, error } = await supabase
+                    .from('gallery_likes')
+                    .select('*');
+                
+                if (error) throw error;
+                
+                images.forEach(img => {
+                    const likeRecord = data ? data.find(d => d.image_id === img.id) : null;
+                    likesData[img.id] = likeRecord ? likeRecord.like_count : 0;
+                });
+                
+                console.log('✅ 点赞数据加载完成:', likesData);
+            } catch (error) {
+                console.error('❌ 加载点赞数据失败:', error);
+                images.forEach(img => { likesData[img.id] = 0; });
+            }
+        }
+
+        // 加载当前用户已点赞的图片
+        async function loadUserLiked() {
+            const userId = getUserId();
+            try {
+                const { data, error } = await supabase
+                    .from('gallery_user_likes')
+                    .select('image_id')
+                    .eq('user_id', userId);
+                
+                if (error) throw error;
+                userLiked = data ? data.map(d => d.image_id) : [];
+                console.log('✅ 用户点赞记录加载完成:', userLiked);
+            } catch (error) {
+                console.error('❌ 加载用户点赞记录失败:', error);
+                userLiked = [];
+            }
+        }
+
+        // 点赞
+        async function likeImage(imageId) {
+            if (userLiked.includes(imageId)) {
+                alert('你已经点过赞啦 ❤️');
+                return false;
+            }
+            
+            const userId = getUserId();
+            
+            try {
+                const newCount = (likesData[imageId] || 0) + 1;
+                
+                // 更新点赞数
+                const { error: updateError } = await supabase
+                    .from('gallery_likes')
+                    .upsert({ 
+                        image_id: imageId, 
+                        like_count: newCount 
+                    }, { onConflict: 'image_id' });
+                
+                if (updateError) throw updateError;
+                
+                // 记录用户点赞
+                const { error: insertError } = await supabase
+                    .from('gallery_user_likes')
+                    .insert({ user_id: userId, image_id: imageId });
+                
+                if (insertError) throw insertError;
+                
+                likesData[imageId] = newCount;
+                userLiked.push(imageId);
+                console.log(`✅ 图片 ${imageId} 点赞成功，当前点赞数: ${newCount}`);
+                return true;
+            } catch (error) {
+                console.error('❌ 点赞失败:', error);
+                alert('点赞失败，请稍后重试');
+                return false;
+            }
+        }
+
+        // 添加新图片（临时，刷新后消失）
+        async function addNewImage() {
+            const url = prompt('请输入图片URL（网络图片链接）:\n示例：images/picsum-100.jpg');
+            if (!url) return;
+            
+            const title = prompt('请输入图片标题:', '月考优秀作答');
+            const desc = prompt('请输入图片描述:', '月考优秀试卷');
+            if (title && desc) {
+                const newId = images.length;
+                const newImage = {
+                    id: newId,
+                    url: url,
+                    title: title,
+                    desc: desc
+                };
+                images.push(newImage);
+                likesData[newId] = 0;
+                
+                await renderGallery();
+                alert('✅ 图片已添加！(仅你本次看到，刷新后消失~)');
+            }
+        }
+
+        // 渲染画廊
+        async function renderGallery() {
+            const grid = document.getElementById('galleryGrid');
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            
+            for (const img of images) {
+                const card = document.createElement('div');
+                card.className = 'gallery-card';
+                const isLiked = userLiked.includes(img.id);
+                const likeCount = likesData[img.id] || 0;
+                
+                card.innerHTML = `
+                    <img src="${img.url}" alt="${img.title}" onerror="this.src='images/picsum-20.jpg'">
+                    <div class="info">
+                        <h3>${img.title}</h3>
+                        <p>${img.desc}</p>
+                        <div class="like-area">
+                            <button class="like-btn ${isLiked ? 'liked' : ''}" data-id="${img.id}">
+                                ${isLiked ? '❤️' : '🤍'} 点赞
+                            </button>
+                            <span class="like-count">${likeCount} 人喜欢</span>
+                        </div>
+                    </div>
+                `;
+                
+                // 点击图片放大
+                const imgElement = card.querySelector('img');
+                imgElement.addEventListener('click', () => openModal(img.url));
+                
+                // 点赞按钮
+                const likeBtn = card.querySelector('.like-btn');
+                likeBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(likeBtn.dataset.id);
+                    const success = await likeImage(id);
+                    if (success) {
+                        likeBtn.classList.add('liked');
+                        likeBtn.innerHTML = '❤️ 点赞';
+                        const countSpan = card.querySelector('.like-count');
+                        countSpan.innerText = `${likesData[id]} 人喜欢`;
+                    }
+                });
+                
+                grid.appendChild(card);
+            }
+            
+            console.log('✅ 画廊渲染完成');
+        }
+
+        // 打开大图
+        function openModal(url) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            if (modal && modalImg) {
+                modalImg.src = url;
+                modal.classList.add('active');
+            }
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            const modal = document.getElementById('imageModal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        // 初始化
+        async function init() {
+            console.log('🚀 画廊初始化开始...');
+            await loadLikesFromSupabase();
+            await loadUserLiked();
+            await renderGallery();
+            console.log('✅ 画廊初始化完成');
+        }
+
+        // 绑定事件
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+            
+            const closeBtn = document.getElementById('closeModal');
+            const modal = document.getElementById('imageModal');
+            const addBtn = document.getElementById('addImageBtn');
+            
+            if (closeBtn) closeBtn.addEventListener('click', closeModal);
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) closeModal();
+                });
+            }
+            if (addBtn) addBtn.addEventListener('click', addNewImage);
+            
+            // ESC 关闭模态框
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeModal();
+            });
+        });
+
+        // 源码防护
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+                (e.ctrlKey && e.key === 'u')) {
+                e.preventDefault();
+            }
+        });
+        
+        document.addEventListener('selectstart', e => e.preventDefault());
+        document.addEventListener('copy', e => e.preventDefault());
+    })();
+</script>
+</body>
+</html>
