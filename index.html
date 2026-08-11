@@ -154,6 +154,47 @@
             background: #4f46e5;
         }
 
+        .totp-card .totp-code-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .totp-card .totp-copy-btn {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 0.8rem;
+            font-size: 0.82rem;
+            color: #4f46e5;
+            background: rgba(79, 70, 229, 0.08);
+            border: 1px solid rgba(79, 70, 229, 0.18);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            font-family: inherit;
+            font-weight: 500;
+        }
+
+        .totp-card .totp-copy-btn:hover {
+            background: #4f46e5;
+            color: #fff;
+            border-color: #4f46e5;
+            transform: translateY(-1px);
+        }
+
+        .totp-card .totp-copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .totp-card .totp-copy-btn.is-copied {
+            background: #10b981;
+            border-color: #10b981;
+            color: #fff;
+        }
+
         .emails {
             display: flex;
             justify-content: center;
@@ -467,14 +508,26 @@
     <!-- 顶部 TOTP 验证框（带进度条）—— 静态占位，JS 后续接入 -->
     <div class="totp-row">
         <div class="totp-card">
-            <div class="totp-label"><span>身份验证器 1</span><i class="fas fa-shield-alt"></i></div>
-            <div class="totp-code" data-totp="">666 395</div>
-            <div class="totp-expire">过期时间：<span data-expire="">00:48:00</span></div>
+            <div class="totp-label"><span>TOTP 1 - 30s</span><i class="fas fa-shield-alt"></i></div>
+            <div class="totp-code-row">
+                <div class="totp-code" data-totp="">000 000</div>
+                <button class="totp-copy-btn" type="button" aria-label="复制验证码">
+                    <i class="fas fa-copy"></i>
+                    <span class="totp-copy-text">复制</span>
+                </button>
+            </div>
+            <div class="totp-expire">过期时间：<span data-expire="">00:00:30</span></div>
             <div class="totp-bar"><i style="width: 90%;"></i></div>
         </div>
         <div class="totp-card">
-            <div class="totp-label"><span>身份验证器 2</span><i class="fas fa-shield-alt"></i></div>
-            <div class="totp-code" data-totp="">741 072</div>
+            <div class="totp-label"><span>TOTP 2 - 1hr</span><i class="fas fa-shield-alt"></i></div>
+            <div class="totp-code-row">
+                <div class="totp-code" data-totp="">000 000</div>
+                <button class="totp-copy-btn" type="button" aria-label="复制验证码">
+                    <i class="fas fa-copy"></i>
+                    <span class="totp-copy-text">复制</span>
+                </button>
+            </div>
             <div class="totp-expire">过期时间：<span data-expire="">01:00:00</span></div>
             <div class="totp-bar"><i style="width: 20.8%;"></i></div>
         </div>
@@ -644,19 +697,6 @@
         });
     }
 
-
-    const greetings = ["☀️ 今天也要加油哦！", "✨ 愿你今天有个好心情", "🍵 喝杯茶，慢慢看", "🎵 听首歌放松一下", "💡 灵感总在不经意间出现", "🚀 保持好奇，继续探索", "🌈 每一天都是新的开始", "🎨 创造属于你的精彩"];
-    const heroH1 = document.querySelector('.hero h1');
-    if (heroH1 && !document.getElementById('greeting')) {
-        const greetingDiv = document.createElement('div');
-        greetingDiv.id = 'greeting';
-        greetingDiv.style.fontSize = '0.9rem';
-        greetingDiv.style.color = 'rgba(255,255,255,0.8)';
-        greetingDiv.style.marginTop = '0.5rem';
-        greetingDiv.style.fontWeight = 'normal';
-        greetingDiv.innerText = greetings[Math.floor(Math.random() * greetings.length)];
-        heroH1.insertAdjacentElement('afterend', greetingDiv);
-    }
 
     const fortuneBtn = document.getElementById('fortuneBtn');
     const fortuneNumber = document.getElementById('fortuneNumber');
@@ -879,6 +919,32 @@ function alertBomb(count = 5) {
 
     updateTOTP();
     setInterval(updateTOTP, 50);
+
+    // 绑定两个卡片的复制按钮
+    document.querySelectorAll('.totp-card').forEach(function (card) {
+        var btn = card.querySelector('.totp-copy-btn');
+        if (!btn) return;
+        var textEl = btn.querySelector('.totp-copy-text');
+        var iconEl = btn.querySelector('i');
+        var originalText = textEl ? textEl.textContent : '复制';
+        var originalIcon = iconEl ? iconEl.className : '';
+
+        btn.addEventListener('click', function () {
+            var codeEl = card.querySelector('[data-totp]');
+            if (!codeEl) return;
+            var code = codeEl.textContent.replace(/\s+/g, '');
+            navigator.clipboard.writeText(code).then(function () {
+                btn.classList.add('is-copied');
+                if (textEl) textEl.textContent = '已复制';
+                if (iconEl) iconEl.className = 'fas fa-check';
+                setTimeout(function () {
+                    btn.classList.remove('is-copied');
+                    if (textEl) textEl.textContent = originalText;
+                    if (iconEl) iconEl.className = originalIcon;
+                }, 1500);
+            });
+        });
+    });
 
 </script>
 
