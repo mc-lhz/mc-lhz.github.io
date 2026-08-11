@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js 基础示例 - 彩色旋转立方体</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0,0,0,0.6);
+            padding: 8px 16px;
+            border-radius: 4px;
+            pointer-events: none;
+            user-select: none;
+            font-size: 14px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">Three.js 基础示例 | 旋转立方体</div>
+
+    <!-- 引入 Three.js 核心库和扩展库 -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        // ----- 导入依赖 -----
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // ----- 1. 创建场景 (Scene) -----
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x111122); // 深蓝色背景
+
+        // ----- 2. 创建透视相机 (Camera) -----
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(5, 5, 10);
+        camera.lookAt(0, 0, 0);
+
+        // ----- 3. 创建 WebGL 渲染器 (Renderer) -----
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true; // 开启阴影效果（本示例未使用但保留）
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // 柔和阴影
+        document.body.appendChild(renderer.domElement);
+
+        // ----- 4. 添加轨道控制器 (OrbitControls) 方便交互 -----
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; // 启用惯性
+        controls.dampingFactor = 0.05;
+        controls.screenSpacePanning = true;
+        controls.autoRotate = false;
+        controls.target.set(0, 0, 0);
+
+        // ----- 5. 添加辅助元素 (可选) -----
+        // 辅助网格地面 (GridHelper)
+        const gridHelper = new THREE.GridHelper(20, 20, 0x88ccff, 0x445566);
+        gridHelper.position.y = -0.5;
+        scene.add(gridHelper);
+
+        // 坐标轴辅助 (AxisHelper) - 注释掉以避免干扰
+        // const axesHelper = new THREE.AxesHelper(5);
+        // scene.add(axesHelper);
+
+        // ----- 6. 添加环境光和平行光，让立方体更有立体感 -----
+        // 环境光：提供基础照明
+        const ambientLight = new THREE.AmbientLight(0x404060);
+        scene.add(ambientLight);
+
+        // 主光源：平行光产生阴影效果 (这里只做照明)
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(3, 5, 2);
+        scene.add(dirLight);
+
+        // 辅助背景光，照亮背面
+        const backLight = new THREE.DirectionalLight(0x4466ff, 0.5);
+        backLight.position.set(-3, 1, -4);
+        scene.add(backLight);
+
+        // 增加一个点光源增加色彩表现
+        const pointLight = new THREE.PointLight(0xffaa00, 0.4, 15);
+        pointLight.position.set(1, 2, 3);
+        scene.add(pointLight);
+
+        // ----- 7. 核心物体：彩色立方体 (使用 BufferGeometry + 顶点颜色) -----
+        // 为了展示更丰富的色彩，我们创建一个立方体，每个面赋予不同的颜色
+        // 方法：为每个顶点指定颜色 (8个顶点，每个顶点颜色不同，但每个面由两个三角形组成，共6个面，每个面4个顶点)
+        // 更简单的方式：使用 6 个独立的材质（每个面一个材质）或使用 MeshFaceMaterial 但已弃用。
+        // 这里采用标准立方体，但使用一个纹理或使用 BoxGeometry 的组 (groups) 来分别着色。
+        // 但为了简单且炫酷，我们直接创建一个立方体，每个面使用不同颜色的材质数组。
+        
+        // 创建一组材质，分别对应立方体的 6 个面: 右, 左, 上, 下, 前, 后
+        const colors = [
+            0xff5733, // 右 - 橙红
+            0x33ff57, // 左 - 亮绿
+            0x3357ff, // 上 - 蓝
+            0xff33f5, // 下 - 粉红
+            0xffd733, // 前 - 黄
+            0x8e44ad  // 后 - 紫
+        ];
+        const materials = colors.map(color => new THREE.MeshStandardMaterial({ 
+            color: color,
+            roughness: 0.3,
+            metalness: 0.1,
+            emissive: new THREE.Color(color).multiplyScalar(0.1) // 轻微自发光
+        }));
+
+        const cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), materials);
+        cube.castShadow = true;
+        cube.receiveShadow = true;
+        scene.add(cube);
+
+        // 添加一个简单的线框效果 (叠加一个边缘线框)
+        const edges = new THREE.EdgesGeometry(new THREE.BoxGeometry(2, 2, 2));
+        const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff }));
+        cube.add(line); // 将线框作为立方体的子元素，随立方体旋转
+
+        // ----- 8. 添加一些悬浮粒子作为背景装饰 (增强视觉效果) -----
+        const particleGeometry = new THREE.BufferGeometry();
+        const particleCount = 1000;
+        const posArray = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount * 3; i += 3) {
+            posArray[i] = (Math.random() - 0.5) * 60;
+            posArray[i+1] = (Math.random() - 0.5) * 40;
+            posArray[i+2] = (Math.random() - 0.5) * 40 - 10; // 分布在相机后面和周围
+        }
+        particleGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particleMaterial = new THREE.PointsMaterial({
+            color: 0x88aaff,
+            size: 0.15,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
+        const particles = new THREE.Points(particleGeometry, particleMaterial);
+        scene.add(particles);
+
+        // 添加一些随机的小星星（静态）
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 500;
+        const starPos = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount * 3; i += 3) {
+            starPos[i] = (Math.random() - 0.5) * 200;
+            starPos[i+1] = (Math.random() - 0.5) * 200;
+            starPos[i+2] = (Math.random() - 0.5) * 200 - 50;
+        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.2, transparent: true });
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+
+        // ----- 9. 动画循环 -----
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // 立方体旋转
+            cube.rotation.x += 0.005;
+            cube.rotation.y += 0.01;
+            // 让粒子系统缓慢旋转
+            particles.rotation.y += 0.0002;
+            stars.rotation.y += 0.0001;
+
+            // 更新控制器（包含阻尼惯性效果）
+            controls.update();
+
+            // 渲染场景
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // ----- 10. 窗口尺寸自适应 -----
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // 控制台输出提示
+        console.log('Three.js 场景已启动！拖动视角查看立方体。');
+    </script>
+</body>
+</html>
