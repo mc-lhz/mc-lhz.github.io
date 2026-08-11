@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Factorization · 个人主页</title>
+    <!-- Font Awesome 6 图标库 -->
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #eef2f7;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            color: #1f2937;
+            line-height: 1.5;
+            scroll-behavior: smooth;
+            min-height: 100vh;
+        }
+.container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: white;
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.8;
+        }
+
+        .hero {
+            text-align: center;
+            margin: 3rem 0 4rem;
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            margin-bottom: 1.5rem;
+            border: 3px solid white;
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .hero .bio {
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.9);
+            max-width: 600px;
+            margin: 0.75rem auto;
+        }
+
+        /* 顶部 TOTP 验证框（带进度条）—— 仅静态结构，JS 后续接入 */
+        .totp-row {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin: 2rem 0 0;
+        }
+
+        .totp-card {
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            min-width: 230px;
+            box-shadow: 0 6px 18px rgba(15,23,42,0.08);
+        }
+
+        .totp-card .totp-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .totp-card .totp-label i {
+            color: #4f46e5;
+        }
+
+        .totp-card .totp-code {
+            font-size: 1.9rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: #111827;
+            font-variant-numeric: tabular-nums;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+
+        .totp-card .totp-expire {
+            font-size: 0.78rem;
+            color: #6b7280;
+            margin-top: 0.35rem;
+        }
+
+        .totp-card .totp-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: #e5e7eb;
+            margin-top: 0.65rem;
+            overflow: hidden;
+        }
+
+        .totp-card .totp-bar > i {
+            display: block;
+            height: 100%;
+            border-radius: 3px;
+            background: #4f46e5;
+        }
+
+        .emails {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .email-link {
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            background: rgba(255,255,255,0.2);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+
+        .email-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            margin-top: 1.5rem;
+        }
+
+        .social-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: white;
+            color: #4b5563;
+            font-size: 1.4rem;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .social-icon:hover {
+            transform: translateY(-4px);
+            color: white;
+        }
+
+        .social-icon[data-platform="bilibili"]:hover { background: #00a1d6; }
+        .social-icon[data-platform="youtube"]:hover { background: #ff0000; }
+        .social-icon[data-platform="telegram"]:hover { background: #26a5e4; }
+        .social-icon[data-platform="instagram"]:hover { background: #e4405f; }
+        .social-icon[data-platform="x"]:hover { background: #000000; }
+        .social-icon[data-platform="facebook"]:hover { background: #1877f2; }
+        .social-icon[data-platform="tiktok"]:hover { background: #000000; }
+
+        section {
+            margin: 4rem 0;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            border-left: 5px solid white;
+            padding-left: 1rem;
+            color: white;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.8rem;
+        }
+
+        .projects-grid a {
+            text-decoration: none;
+            display: block;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            backdrop-filter: blur(4px);
+            height: 100%;
+            min-height: 180px;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 32px rgba(0,0,0,0.15);
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.75rem;
+            color: #1f2937;
+        }
+
+        .card p {
+            color: #4b5563;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .card-tag {
+            display: inline-block;
+            background: #eef2ff;
+            color: #3b82f6;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.8rem;
+            border-radius: 20px;
+            margin-top: 0.5rem;
+        }
+
+        .article-list {
+            list-style: none;
+        }
+
+        .article-list li {
+            background: rgba(255,255,255,0.95);
+            margin-bottom: 1rem;
+            border-radius: 1rem;
+            padding: 1rem 1.5rem;
+            transition: transform 0.2s;
+        }
+
+        .article-list li:hover {
+            transform: translateX(4px);
+        }
+
+        .article-list li a {
+            text-decoration: none;
+            font-weight: 500;
+            color: #1f2937;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .article-date {
+            font-size: 0.8rem;
+            color: #9ca3af;
+        }
+
+
+        .fortune-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            text-align: center;
+            margin: 2rem auto;
+            max-width: 380px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .fortune-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin: 0.5rem 0;
+        }
+
+        .fortune-message {
+            font-size: 1rem;
+            color: #4b5563;
+            margin-bottom: 0.75rem;
+        }
+
+        .fortune-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .fortune-btn:hover {
+            background: #2563eb;
+            transform: scale(1.02);
+        }
+
+        .fortune-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+ 
+        .mxha-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .mxha-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+        }
+
+        .mxha-desc {
+            color: #4b5563;
+            margin-bottom: 1rem;
+        }
+
+        .mxha-qq {
+            background: #eef2ff;
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #3b82f6;
+            margin-top: 0.5rem;
+        }
+
+        .mxha-qq i {
+            margin-right: 0.5rem;
+        }
+
+
+        .dont-click-wrapper {
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .dont-click-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dont-click-btn:hover {
+            background: #dc2626;
+            transform: scale(1.02);
+        }
+
+        .contact {
+            background: rgba(255,255,255,0.95);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .footer {
+            margin-top: 4rem;
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.8rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 2rem;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+            }
+            .navbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+            .social-links {
+                gap: 0.8rem;
+            }
+            .social-icon {
+                width: 38px;
+                height: 38px;
+                font-size: 1.2rem;
+            }
+            .fortune-number {
+                font-size: 2rem;
+            }
+            .mxha-title {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="navbar">
+        <div class="logo">Factorization</div>
+        <div class="nav-links">
+            <a href="#">首页</a>
+            <a href="#projects">项目</a>
+            <a href="#articles">随笔</a>
+            <a href="#contact">联系</a>
+        </div>
+    </div>
+
+    <!-- 顶部 TOTP 验证框（带进度条）—— 静态占位，JS 后续接入 -->
+    <div class="totp-row">
+        <div class="totp-card">
+            <div class="totp-label"><span>身份验证器 1</span><i class="fas fa-shield-alt"></i></div>
+            <div class="totp-code" data-totp="">666 395</div>
+            <div class="totp-expire">过期时间：<span data-expire="">00:48:00</span></div>
+            <div class="totp-bar"><i style="width: 90%;"></i></div>
+        </div>
+        <div class="totp-card">
+            <div class="totp-label"><span>身份验证器 2</span><i class="fas fa-shield-alt"></i></div>
+            <div class="totp-code" data-totp="">741 072</div>
+            <div class="totp-expire">过期时间：<span data-expire="">01:00:00</span></div>
+            <div class="totp-bar"><i style="width: 20.8%;"></i></div>
+        </div>
+    </div>
+
+    <div class="hero">
+        <img class="avatar" src="images/avatar/abc.jpg" alt="Factorization的头像" style="cursor: pointer;">
+        <h1>你好，我是 Factorization ✨</h1><div id="greeting" style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); margin-top: 0.5rem; font-weight: normal;">🎨 创造属于你的精彩</div>
+        <div class="bio">
+            心若有所向往 · 何惧道阻且长
+        </div>
+        
+        <div class="emails">
+            <a href="mailto:fx@factorization.top" class="email-link">📧 fx@factorization.top</a>
+            <a href="mailto:factorizationx@gmail.com" class="email-link">📧 factorizationx@gmail.com</a>
+        </div>
+
+        <div class="social-links">
+            <a href="https://space.bilibili.com/668785742" target="_blank" class="social-icon" data-platform="bilibili"><i class="fab fa-bilibili"></i></a>
+            <a href="https://youtube.com/@Factorizationx" target="_blank" class="social-icon" data-platform="youtube"><i class="fab fa-youtube"></i></a>
+            <a href="https://t.me/Factorizationx" target="_blank" class="social-icon" data-platform="telegram"><i class="fab fa-telegram"></i></a>
+            <a href="https://instagram.com/Factorizationx" target="_blank" class="social-icon" data-platform="instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://x.com/hhg" target="_blank" class="social-icon" data-platform="x">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                </svg>
+            </a>
+            <a href="https://facebook.com/Factorizationx" target="_blank" class="social-icon" data-platform="facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="https://tiktok.com/@Factorizationx" target="_blank" class="social-icon" data-platform="tiktok"><i class="fab fa-tiktok"></i></a>
+        </div>
+    </div>
+
+    <!-- 项目作品区 -->
+    <section id="projects">
+        <h2 class="section-title">✨ 最近项目</h2>
+        <div class="projects-grid">
+            <a href="tool.html" target="_blank">
+                <div class="card">
+                    <h3>🛠️ 超级工具箱</h3>
+                    <p>10合1实用工具：番茄钟、密码生成器、天气、单位换算、倒计时等</p>
+                    <span class="card-tag">点击打开</span>
+                </div>
+            </a>
+            <a href="graph.html" target="_blank">
+    <div class="card">
+        <h3>📈 超级无敌函数图像生成器</h3>
+        <p>秒正弦余弦函数 · 闭眼画出抛物线 · 支持sin/cos/平方等</p>
+        <span class="card-tag">快来试试</span>
+    </div>
+</a>
+            <a href="signup.html" target="_blank">
+                <div class="card">
+                    <h3>📋 起床战争大赛报名</h3>
+                    <p>社团活动 · 4月8日 · 电子阅览室</p>
+                    <span class="card-tag">点击报名</span>
+                </div>
+            </a>
+            <div class="card">
+                <h3>个人主页 v3</h3>
+                <p>集成大多国内外主流社交平台。</p>
+                <span class="card-tag">设计/前端</span>
+            </div>
+            <a href="redstone.html" target="_blank" style="text-decoration: none; display: block;">
+                <div class="card">
+                    <h3>⚡ 红石社官网</h3>
+                    <p>红石科技 · 社团招新 · 作品展示</p>
+                    <span class="card-tag">点击进入</span>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <!-- 博客/文章区 -->
+    <section id="articles">
+        <h2 class="section-title">📝 近期随笔</h2>
+        <ul class="article-list">
+            <li>
+                <a href="#">
+                    <span>这一次，我的语文达到了历史最低，且作文竟高达36/60分！</span>
+                    <span class="article-date">2026-03-28</span>
+                </a>
+            </li>
+            <li>
+                <a href="gallery.html" target="_blank">📚 月考优秀作答展示 · 第一期</a>
+                <span class="article-date">2026-03-28</span>
+            </li>
+            <li>
+                <a href="#">
+                    <span>作业有点少，成绩有点高</span>
+                    <span class="article-date">2026-03-15</span>
+                </a>
+            </li>
+        </ul>
+    </section>
+
+
+    <div class="mxha-card">
+        <div class="mxha-title">⚡ MXHA · 厦门高中生MC联盟</div>
+        <div class="mxha-desc">
+            厦门地区 Minecraft 爱好者聚集地<br>
+            交流建筑、红石、小游戏、服务器
+        </div>
+        <div class="mxha-qq">
+            <i class="fab fa-qq"></i> QQ群：1076713731
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.8rem; color: #6b7280;">
+            如果你感兴趣，欢迎加入我们！
+        </div>
+    </div>
+
+
+    <div class="fortune-card">
+        <h3>🎲 今日人品</h3>
+        <div class="fortune-number" id="fortuneNumber">--</div>
+        <div class="fortune-message" id="fortuneMessage">点击测试今日人品</div>
+        <button class="fortune-btn" id="fortuneBtn">测一测 🎲</button>
+        <div id="fortuneStatus" style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.5rem;"></div>
+    </div>
+
+
+    <div class="dont-click-wrapper">
+        <button class="dont-click-btn" id="dontClickBtn">⚠️ 千万别点 ⚠️</button>
+    </div>
+
+   
+    <section id="contact">
+        <div class="contact">
+            <h2>📬 保持联系</h2>
+            <p>欢迎交流想法、合作或单纯打个招呼 👋</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="mailto:fx@factorization.top" class="email-link">📧 fx@factorization.top</a>
+                <span>·</span>
+                <a href="mailto:factorizationx@gmail.com" class="email-link">📧 factorizationx@gmail.com</a>
+            </div>
+        </div>
+    </section>
+
+    <div class="footer">
+        © 2026 Factorization · 心若有所向往 · 何惧道阻且长
+    </div>
+</div>
+
+<!-- TOTP 生成库（本仓库已有，浏览器下 generateTOTP 挂到全局） -->
+<script src="generate-totp.js"></script>
+<script>
+
+    document.querySelectorAll('.nav-links a, .hero a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            const hash = this.getAttribute('href');
+            if (hash && hash !== '#') {
+                const target = document.querySelector(hash);
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+        });
+    });
+
+
+    const avatar = document.querySelector('.avatar');
+    if (avatar) {
+        avatar.style.cursor = 'pointer';
+        avatar.addEventListener('click', () => {
+            const messages = ["🎉 被你发现啦！", "👋 你好呀～", "⭐ 谢谢你来看我", "💻 一起加油！", "🌟 愿你今天开心", "🔮 这是一个隐藏彩蛋！", "💖 你点击了我的头像~"];
+            alert(messages[Math.floor(Math.random() * messages.length)]);
+        });
+    }
+
+
+    const greetings = ["☀️ 今天也要加油哦！", "✨ 愿你今天有个好心情", "🍵 喝杯茶，慢慢看", "🎵 听首歌放松一下", "💡 灵感总在不经意间出现", "🚀 保持好奇，继续探索", "🌈 每一天都是新的开始", "🎨 创造属于你的精彩"];
+    const heroH1 = document.querySelector('.hero h1');
+    if (heroH1 && !document.getElementById('greeting')) {
+        const greetingDiv = document.createElement('div');
+        greetingDiv.id = 'greeting';
+        greetingDiv.style.fontSize = '0.9rem';
+        greetingDiv.style.color = 'rgba(255,255,255,0.8)';
+        greetingDiv.style.marginTop = '0.5rem';
+        greetingDiv.style.fontWeight = 'normal';
+        greetingDiv.innerText = greetings[Math.floor(Math.random() * greetings.length)];
+        heroH1.insertAdjacentElement('afterend', greetingDiv);
+    }
+
+    const fortuneBtn = document.getElementById('fortuneBtn');
+    const fortuneNumber = document.getElementById('fortuneNumber');
+    const fortuneMessage = document.getElementById('fortuneMessage');
+    const fortuneStatus = document.getElementById('fortuneStatus');
+
+    const fortuneMessages = [
+        { min: 1, max: 10, text: "💀 大凶！今天诸事不宜，建议躺平" },
+        { min: 11, max: 20, text: "😰 凶，运气不佳，小心行事" },
+        { min: 21, max: 40, text: "😐 平平无奇，今天当个普通人" },
+        { min: 41, max: 60, text: "🙂 还行，运气一般般" },
+        { min: 61, max: 80, text: "😊 小吉，今天会有小惊喜哦" },
+        { min: 81, max: 95, text: "🎉 大吉！今天运气爆棚！" },
+        { min: 96, max: 100, text: "🌟 欧皇降临！快去抽卡/买彩票！" }
+    ];
+
+    function getFortuneMessage(num) {
+        for (const msg of fortuneMessages) {
+            if (num >= msg.min && num <= msg.max) {
+                return msg.text;
+            }
+        }
+        return "✨ 今日运势未知 ✨";
+    }
+
+    function getTodayKey() {
+        const today = new Date();
+        return `fortune_${today.getFullYear()}_${today.getMonth() + 1}_${today.getDate()}`;
+    }
+
+    function hasTestedToday() {
+        const key = getTodayKey();
+        const tested = localStorage.getItem(key);
+        return tested === 'true';
+    }
+
+    function saveTestedToday() {
+        const key = getTodayKey();
+        localStorage.setItem(key, 'true');
+    }
+
+    function getSavedFortune() {
+        const key = getTodayKey();
+        const saved = localStorage.getItem(`${key}_value`);
+        return saved ? parseInt(saved) : null;
+    }
+
+    function saveFortuneValue(num) {
+        const key = getTodayKey();
+        localStorage.setItem(`${key}_value`, num);
+    }
+
+    function displaySavedFortune() {
+        const num = getSavedFortune();
+        if (num !== null) {
+            const message = getFortuneMessage(num);
+            fortuneNumber.innerText = `${num}%`;
+            fortuneMessage.innerText = message;
+            fortuneStatus.innerText = '✨ 今日已测，明天再来吧 ✨';
+            fortuneBtn.disabled = true;
+        }
+    }
+
+    if (hasTestedToday()) {
+        displaySavedFortune();
+    }
+
+    fortuneBtn.addEventListener('click', () => {
+        if (hasTestedToday()) {
+            fortuneStatus.innerText = '⚠️ 今天已经测过啦！明天再来吧 ⚠️';
+            return;
+        }
+        
+        const num = Math.floor(Math.random() * 100) + 1;
+        const message = getFortuneMessage(num);
+        
+        fortuneNumber.innerText = `${num}%`;
+        fortuneMessage.innerText = message;
+        fortuneStatus.innerText = '✨ 今日人品已保存 ✨';
+        
+        saveTestedToday();
+        saveFortuneValue(num);
+        fortuneBtn.disabled = true;
+        
+        fortuneNumber.style.transform = 'scale(1.2)';
+        setTimeout(() => {
+            fortuneNumber.style.transform = 'scale(1)';
+        }, 300);
+    });
+
+
+    const dontClickBtn = document.getElementById('dontClickBtn');
+    
+
+    function shakeWindow(duration = 500) {
+        const originalPos = { top: window.scrollY, left: window.scrollX };
+        const startTime = Date.now();
+        
+        function shake() {
+            const elapsed = Date.now() - startTime;
+            if (elapsed >= duration) {
+                window.scrollTo(originalPos.top, originalPos.left);
+                return;
+            }
+            const intensity = (duration - elapsed) / duration * 30;
+            const x = Math.sin(elapsed * 0.05) * intensity;
+            const y = Math.cos(elapsed * 0.07) * intensity;
+            window.scrollTo(originalPos.top + y, originalPos.left + x);
+            requestAnimationFrame(shake);
+        }
+        shake();
+    }
+function alertBomb(count = 5) {
+        let i = 0;
+        const messages = [
+            "⚠️ 都说了别点！",
+            "💢 你还不信！",
+            "😈 后悔了吧？",
+            "🎭 愚人节快乐！",
+            "💥 最后一次警告！",
+            "🐱 喵~ 叫你别点",
+            "✨ 好玩吗？",
+            "😜 哈哈哈哈"
+        ];
+        function showNext() {
+            if (i >= count) return;
+            alert(messages[i % messages.length]);
+            i++;
+            setTimeout(showNext, 150);
+        }
+        showNext();
+    }
+ 
+    function flipPage() {
+        document.body.style.transition = 'transform 0.3s';
+        document.body.style.transform = 'rotate(180deg)';
+        setTimeout(() => {
+            document.body.style.transform = 'rotate(0deg)';
+            setTimeout(() => {
+                document.body.style.transition = '';
+            }, 300);
+        }, 800);
+    }
+    
+
+    function changeRandomText() {
+        const elements = document.querySelectorAll('h1, h2, h3, .card p');
+        const originalTexts = [];
+        elements.forEach((el, idx) => {
+            originalTexts[idx] = el.innerText;
+            const randomWords = ["???", "!!!", "😵", "💢", "🎭", "🐱", "别点了", "说了别点", "你还点", "我裂开了"];
+            el.innerText = randomWords[Math.floor(Math.random() * randomWords.length)];
+        });
+        setTimeout(() => {
+            elements.forEach((el, idx) => {
+                el.innerText = originalTexts[idx];
+            });
+        }, 2000);
+    }
+    
+    dontClickBtn.addEventListener('click', () => {
+
+        const effects = [
+            () => { alertBomb(4); shakeWindow(800); },
+            () => { alertBomb(3); flipPage(); changeRandomText(); },
+            () => { alertBomb(5); shakeWindow(1000); changeRandomText(); },
+            () => { alertBomb(3); changeRandomText(); },
+            () => { alertBomb(4); flipPage(); shakeWindow(600); }
+        ];
+        const randomEffect = effects[Math.floor(Math.random() * effects.length)];
+        randomEffect();
+    });
+
+
+    // ---------- 顶部 TOTP 验证框 ----------
+    // Base32 密钥
+    var TOTP_SECRET = "LSESKCQWEFSPPMZQ";
+
+    // 第 1 张卡：30 秒一刷；第 2 张卡：1 小时一刷
+    var TOTP_CONFIGS = [
+        { period: 30,   digits: 6 },
+        { period: 3600, digits: 6 }
+    ];
+
+    function formatCode(code) {
+        return code.slice(0, 3) + ' ' + code.slice(3);
+    }
+
+    function formatTime(remainingSec) {
+        var total = Math.floor(remainingSec);
+        var hh = Math.floor(total / 3600);
+        var mm = Math.floor((total % 3600) / 60);
+        var ss = total % 60;
+        var pad = function (n) { return n < 10 ? '0' + n : String(n); };
+        if (hh > 0) {
+            return pad(hh) + ':' + pad(mm) + ':' + pad(ss);
+        }else{
+            return pad(mm) + ':' + pad(ss);
+        }
+    }
+
+    function updateTOTP() {
+        var now = Date.now() / 1000;
+        var cards = document.querySelectorAll('.totp-card');
+        cards.forEach(function (card, i) {
+            var cfg = TOTP_CONFIGS[i];
+            if (!cfg) return;
+            // 验证码（在周期边界才会变化）
+            var code = generateTOTP(TOTP_SECRET, { time: now, period: cfg.period, digits: cfg.digits });
+            card.querySelector('[data-totp]').textContent = formatCode(code);
+            // 过期时间 = 当前周期窗口结束时刻
+            var remaining = cfg.period - (now % cfg.period);
+            var expireEpoch = remaining;
+            card.querySelector('[data-expire]').textContent = formatTime(expireEpoch);
+            // 进度条：剩余比例（满→空，表示时间正在流逝）
+            var pct = (remaining / cfg.period) * 100;
+            card.querySelector('.totp-bar > i').style.width = pct.toFixed(1) + '%';
+        });
+    }
+
+    updateTOTP();
+    setInterval(updateTOTP, 50);
+
+</script>
+
+</body></html>
