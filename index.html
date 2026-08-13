@@ -618,6 +618,13 @@
                     <span class="card-tag">设计/前端</span>
                 </div>
             </a>
+            <a href="/MirroredWebPage" target="_blank">
+                <div class="card">
+                    <h3>离线工具</h3>
+                    <p>包含Desmos、Geogebra等</p>
+                    <span class="card-tag">点击使用</span>
+                </div>
+            </a>
             
         </div>
     </section>
@@ -687,8 +694,8 @@
         </div>
     </section>
 
-    <div class="footer">
-        © 2026 mc_lhz · 心若有所向往 · 何惧道阻且长
+    <div class="footer" onload="var year = new Date().getFullYear(); this.innerHTML = this.innerHTML.replace('{{year}}', year)"></div>
+        © {{year}} mc_lhz · 心若有所向往 · 何惧道阻且长
     </div>
 </div>
 
