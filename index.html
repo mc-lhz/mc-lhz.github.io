@@ -357,53 +357,6 @@
             color: #9ca3af;
         }
 
-
-        .fortune-card {
-            background: rgba(255,255,255,0.95);
-            border-radius: 1.5rem;
-            padding: 1.2rem;
-            text-align: center;
-            margin: 2rem auto;
-            max-width: 380px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        }
-
-        .fortune-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #3b82f6;
-            margin: 0.5rem 0;
-        }
-
-        .fortune-message {
-            font-size: 1rem;
-            color: #4b5563;
-            margin-bottom: 0.75rem;
-        }
-
-        .fortune-btn {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 0.5rem 1.5rem;
-            border-radius: 2rem;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .fortune-btn:hover {
-            background: #2563eb;
-            transform: scale(1.02);
-        }
-
-        .fortune-btn:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-            transform: none;
-        }
-
- 
         .mxha-card {
             background: rgba(255,255,255,0.95);
             border-radius: 1.5rem;
@@ -437,28 +390,6 @@
 
         .mxha-qq i {
             margin-right: 0.5rem;
-        }
-
-
-        .dont-click-wrapper {
-            text-align: center;
-            margin: 2rem 0;
-        }
-
-        .dont-click-btn {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 2rem;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .dont-click-btn:hover {
-            background: #dc2626;
-            transform: scale(1.02);
         }
 
         .contact {
@@ -495,9 +426,6 @@
                 width: 38px;
                 height: 38px;
                 font-size: 1.2rem;
-            }
-            .fortune-number {
-                font-size: 2rem;
             }
             .mxha-title {
                 font-size: 1.2rem;
@@ -668,21 +596,6 @@
     </div>
 
 
-    <div class="fortune-card">
-        <h3>🎲 今日人品</h3>
-        <div class="fortune-number" id="fortuneNumber">--</div>
-        <div class="fortune-message" id="fortuneMessage">点击测试今日人品</div>
-        <button class="fortune-btn" id="fortuneBtn">测一测 🎲</button>
-        <div id="fortuneStatus" style="font-size: 0.75rem; color: #9ca3af; margin-top: 0.5rem;"></div>
-    </div>
-
-
-    <div class="dont-click-wrapper">
-        <button class="dont-click-btn" id="dontClickBtn">⚠️ 千万别点 ⚠️</button>
-    </div>
-
-
-
     <div class="footer" onload=""></div>
         © 2026 mc_lhz · 心若有所向往 · 何惧道阻且长
     </div>
@@ -714,179 +627,6 @@
             alert(messages[Math.floor(Math.random() * messages.length)]);
         });
     }
-
-
-    const fortuneBtn = document.getElementById('fortuneBtn');
-    const fortuneNumber = document.getElementById('fortuneNumber');
-    const fortuneMessage = document.getElementById('fortuneMessage');
-    const fortuneStatus = document.getElementById('fortuneStatus');
-
-    const fortuneMessages = [
-        { min: 1, max: 10, text: "💀 大凶！今天诸事不宜，建议躺平" },
-        { min: 11, max: 20, text: "😰 凶，运气不佳，小心行事" },
-        { min: 21, max: 40, text: "😐 平平无奇，今天当个普通人" },
-        { min: 41, max: 60, text: "🙂 还行，运气一般般" },
-        { min: 61, max: 80, text: "😊 小吉，今天会有小惊喜哦" },
-        { min: 81, max: 95, text: "🎉 大吉！今天运气爆棚！" },
-        { min: 96, max: 100, text: "🌟 欧皇降临！快去抽卡/买彩票！" }
-    ];
-
-    function getFortuneMessage(num) {
-        for (const msg of fortuneMessages) {
-            if (num >= msg.min && num <= msg.max) {
-                return msg.text;
-            }
-        }
-        return "✨ 今日运势未知 ✨";
-    }
-
-    function getTodayKey() {
-        const today = new Date();
-        return `fortune_${today.getFullYear()}_${today.getMonth() + 1}_${today.getDate()}`;
-    }
-
-    function hasTestedToday() {
-        const key = getTodayKey();
-        const tested = localStorage.getItem(key);
-        return tested === 'true';
-    }
-
-    function saveTestedToday() {
-        const key = getTodayKey();
-        localStorage.setItem(key, 'true');
-    }
-
-    function getSavedFortune() {
-        const key = getTodayKey();
-        const saved = localStorage.getItem(`${key}_value`);
-        return saved ? parseInt(saved) : null;
-    }
-
-    function saveFortuneValue(num) {
-        const key = getTodayKey();
-        localStorage.setItem(`${key}_value`, num);
-    }
-
-    function displaySavedFortune() {
-        const num = getSavedFortune();
-        if (num !== null) {
-            const message = getFortuneMessage(num);
-            fortuneNumber.innerText = `${num}%`;
-            fortuneMessage.innerText = message;
-            fortuneStatus.innerText = '✨ 今日已测，明天再来吧 ✨';
-            fortuneBtn.disabled = true;
-        }
-    }
-
-    if (hasTestedToday()) {
-        displaySavedFortune();
-    }
-
-    fortuneBtn.addEventListener('click', () => {
-        if (hasTestedToday()) {
-            fortuneStatus.innerText = '⚠️ 今天已经测过啦！明天再来吧 ⚠️';
-            return;
-        }
-        
-        const num = Math.floor(Math.random() * 100) + 1;
-        const message = getFortuneMessage(num);
-        
-        fortuneNumber.innerText = `${num}%`;
-        fortuneMessage.innerText = message;
-        fortuneStatus.innerText = '✨ 今日人品已保存 ✨';
-        
-        saveTestedToday();
-        saveFortuneValue(num);
-        fortuneBtn.disabled = true;
-        
-        fortuneNumber.style.transform = 'scale(1.2)';
-        setTimeout(() => {
-            fortuneNumber.style.transform = 'scale(1)';
-        }, 300);
-    });
-
-
-    const dontClickBtn = document.getElementById('dontClickBtn');
-    
-
-    function shakeWindow(duration = 500) {
-        const originalPos = { top: window.scrollY, left: window.scrollX };
-        const startTime = Date.now();
-        
-        function shake() {
-            const elapsed = Date.now() - startTime;
-            if (elapsed >= duration) {
-                window.scrollTo(originalPos.top, originalPos.left);
-                return;
-            }
-            const intensity = (duration - elapsed) / duration * 30;
-            const x = Math.sin(elapsed * 0.05) * intensity;
-            const y = Math.cos(elapsed * 0.07) * intensity;
-            window.scrollTo(originalPos.top + y, originalPos.left + x);
-            requestAnimationFrame(shake);
-        }
-        shake();
-    }
-function alertBomb(count = 5) {
-        let i = 0;
-        const messages = [
-            "⚠️ 都说了别点！",
-            "💢 你还不信！",
-            "😈 后悔了吧？",
-            "🎭 愚人节快乐！",
-            "💥 最后一次警告！",
-            "🐱 喵~ 叫你别点",
-            "✨ 好玩吗？",
-            "😜 哈哈哈哈"
-        ];
-        function showNext() {
-            if (i >= count) return;
-            alert(messages[i % messages.length]);
-            i++;
-            setTimeout(showNext, 150);
-        }
-        showNext();
-    }
- 
-    function flipPage() {
-        document.body.style.transition = 'transform 0.3s';
-        document.body.style.transform = 'rotate(180deg)';
-        setTimeout(() => {
-            document.body.style.transform = 'rotate(0deg)';
-            setTimeout(() => {
-                document.body.style.transition = '';
-            }, 300);
-        }, 800);
-    }
-    
-
-    function changeRandomText() {
-        const elements = document.querySelectorAll('h1, h2, h3, .card p');
-        const originalTexts = [];
-        elements.forEach((el, idx) => {
-            originalTexts[idx] = el.innerText;
-            const randomWords = ["???", "!!!", "😵", "💢", "🎭", "🐱", "别点了", "说了别点", "你还点", "我裂开了"];
-            el.innerText = randomWords[Math.floor(Math.random() * randomWords.length)];
-        });
-        setTimeout(() => {
-            elements.forEach((el, idx) => {
-                el.innerText = originalTexts[idx];
-            });
-        }, 2000);
-    }
-    
-    dontClickBtn.addEventListener('click', () => {
-
-        const effects = [
-            () => { alertBomb(4); shakeWindow(800); },
-            () => { alertBomb(3); flipPage(); changeRandomText(); },
-            () => { alertBomb(5); shakeWindow(1000); changeRandomText(); },
-            () => { alertBomb(3); changeRandomText(); },
-            () => { alertBomb(4); flipPage(); shakeWindow(600); }
-        ];
-        const randomEffect = effects[Math.floor(Math.random() * effects.length)];
-        randomEffect();
-    });
 
 
     // ---------- 顶部 TOTP 验证框 ----------
