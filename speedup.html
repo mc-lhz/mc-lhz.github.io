@@ -1,62 +1,377 @@
 <!doctype html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-    <meta charset="utf-8">
-    <title>Base32 编码器</title>
-    <style>
-        body { font-family: system-ui, sans-serif; margin: 40px; }
-        textarea, input { width: 100%; box-sizing: border-box; font-family: monospace; padding: 8px; }
-        textarea { height: 100px; }
-        button { margin-top: 12px; padding: 8px 16px; font-size: 14px; }
-        div { margin-bottom: 16px; }
-        label { display: block; margin-bottom: 4px; font-weight: bold; }
-        #out { background: #f5f5f5; white-space: pre-wrap; word-break: break-all; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GitHub Mirror</title>
+<meta name="description" content="输入任意网址，Base32 编码后打开加速链接。">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+        --bg: #ffffff;
+        --bg-soft: #ffffff;
+        --bg-row: #f9fafb;
+        --text: #111827;
+        --text-mid: #4b5563;
+        --text-soft: #9ca3af;
+        --border: #e5e7eb;
+        --input-bg: #ffffff;
+        --card-bg: #ffffff;
+        --primary: #2563eb;
+        --primary-lt: #3b82f6;
+        --chip-bg: #f3f4f6;
+        --chip-border: #e5e7eb;
+        --yellow-bg: #fffbeb;
+        --yellow-border: #fde68a;
+        --yellow-text: #92400e;
+        --hover: #f3f4f6;
+        --shadow: 0 1px 2px rgba(0,0,0,.05);
+        color-scheme: light;
+    }
+
+    html.dark {
+        --bg: #111827;
+        --bg-soft: #111827;
+        --bg-row: #1f2937;
+        --text: #f9fafb;
+        --text-mid: #9ca3af;
+        --text-soft: #6b7280;
+        --border: #374151;
+        --input-bg: #1f2937;
+        --card-bg: #1f2937;
+        --primary: #3b82f6;
+        --primary-lt: #60a5fa;
+        --chip-bg: #1f2937;
+        --chip-border: #374151;
+        --yellow-bg: rgba(113,63,18,.2);
+        --yellow-border: #92600b;
+        --yellow-text: #fbbf24;
+        --hover: #293548;
+        color-scheme: dark;
+    }
+
+    body {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        transition: background .2s, color .2s;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; }
+
+    .header { border-bottom: 1px solid var(--border); }
+    .header-inner {
+        max-width: 1280px; margin: 0 auto; padding: 0 1.5rem;
+        display: flex; align-items: center; justify-content: space-between; height: 64px;
+    }
+    .brand { display: flex; align-items: center; gap: .5rem; }
+    .brand .logo {
+        width: 40px; height: 40px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--card-bg); border: 1px solid var(--border);
+    }
+    .brand .logo svg { width: 30px; height: 30px; fill: var(--text); }
+    .brand .name { font-size: 1.25rem; font-weight: 600; }
+    .brand .name:hover { opacity: .8; }
+    .header-actions { display: flex; align-items: center; gap: .5rem; }
+    .btn-ghost {
+        display: inline-flex; align-items: center; gap: .5rem;
+        background: var(--chip-bg); border: 1px solid var(--border);
+        color: var(--text); border-radius: 8px; padding: .45rem .9rem;
+        font-size: .8125rem; font-weight: 600; line-height: 17px;
+        transition: background .15s;
+    }
+    .btn-ghost:hover { background: var(--hover); }
+    .btn-ghost svg { width: 15px; height: 15px; }
+    .icon-btn {
+        width: 34px; height: 31px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--chip-bg); border: 1px solid var(--border); color: var(--text-mid);
+        transition: background .15s;
+    }
+    .icon-btn:hover { background: var(--hover); }
+    .icon-btn svg { width: 16px; height: 16px; }
+
+    .main { flex: 1; max-width: 1000px; margin: 0 auto; padding: 2rem 1.25rem 4rem; width: 100%; }
+    .hero { text-align: center; padding-top: 1rem; margin-bottom: 2.5rem; }
+    .hero h1 { font-size: 3rem; font-weight: 700; letter-spacing: -.02em; }
+    .hero h1 span { color: var(--primary); }
+    .hero p { color: var(--text-mid); margin-top: .75rem; font-size: 1rem; }
+
+    .url-row { display: flex; flex-direction: column; gap: .75rem; }
+    @media (min-width: 640px) { .url-row { flex-direction: row; align-items: flex-start; } }
+    .url-input {
+        flex: 1; width: 100%;
+        height: 48px; padding: 0 1rem;
+        background: var(--input-bg); color: var(--text);
+        border: 1px solid var(--border); border-radius: 8px;
+        font-size: .9375rem; outline: none;
+        transition: border-color .15s, box-shadow .15s;
+    }
+    .url-input::placeholder { color: var(--text-soft); }
+    .url-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,.2); }
+    .url-btn {
+        height: 48px; padding: 0 1.5rem; border-radius: 8px;
+        font-size: .9375rem; font-weight: 500;
+        white-space: nowrap; transition: background .15s;
+    }
+    .url-btn:hover { background: var(--hover); }
+    #get-btn {
+        border: 1px solid var(--primary);
+        background: var(--primary);
+        color: var(--bg);
+    }
+    #open-btn {
+        border: 1px solid var(--primary);
+        background: var(--card-bg);
+        color: var(--text-mid);
+    }
+
+    .info-bar {
+        display: flex; flex-wrap: wrap; align-items: center; gap: .6rem;
+        margin-top: 1.25rem; padding: .75rem 1rem;
+        background: var(--bg-row); border: 1px solid var(--border); border-radius: 8px;
+        color: var(--text-mid); font-size: .8125rem;
+    }
+    .info-bar b { color: var(--text); font-weight: 600; }
+    .info-bar .code { font-family: ui-monospace, "SF Mono", Consolas, Menlo, monospace; }
+
+    .notice {
+        display: flex; align-items: flex-start; gap: .75rem;
+        background: var(--yellow-bg); border: 1px solid var(--yellow-border);
+        border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; color: var(--yellow-text);
+        font-size: .875rem;
+    }
+    .notice svg { width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; }
+
+    .footer { border-top: 1px solid var(--border); padding: 3rem 1.5rem 2rem; margin-top: auto; }
+    .footer-inner { max-width: 1280px; margin: 0 auto; }
+    .footer-cols { display: flex; flex-direction: column; gap: 2rem; }
+    @media (min-width: 1024px) { .footer-cols { flex-direction: row; gap: 6rem; justify-content: space-between; } }
+    .footer-brand { max-width: 20rem; }
+    .footer-brand h3 { font-size: 1.5rem; font-weight: 700; }
+    .footer-brand h3 span { color: var(--primary); }
+    .footer-brand p { margin-top: 1rem; color: var(--text-soft); font-size: .875rem; line-height: 1.4; }
+    .footer-social { display: flex; gap: 1.2rem; margin-top: 1.25rem; color: var(--text-soft); }
+    .footer-social a:hover { color: var(--primary); }
+    .footer-social svg { width: 22px; height: 22px; }
+    .footer-grid { flex: 1; display: grid; grid-template-columns: 1fr; gap: 2rem; }
+    @media (min-width: 640px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 1024px) { .footer-grid { grid-template-columns: repeat(3, 1fr); } }
+    .footer-col p { font-weight: 600; }
+    .footer-col .links { margin-top: 1.25rem; display: flex; flex-direction: column; gap: .9rem; font-size: .875rem; }
+    .footer-col a { color: var(--text-soft); }
+    .footer-col a:hover { opacity: .75; }
+    .footer-bottom {
+        margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border);
+        display: flex; flex-direction: column; gap: 1rem; align-items: center; justify-content: space-between;
+        font-size: .875rem; color: var(--text-soft);
+    }
+    @media (min-width: 640px) { .footer-bottom { flex-direction: row; } }
+    .footer-bottom .icp { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+    .footer-bottom a:hover { color: var(--text); }
+    .footer-bottom .back-home { font-weight: 500; color: var(--text-mid); }
+</style>
 </head>
 <body>
-    <div>
-        <label for="in">输入</label>
-        <textarea id="in" placeholder="输入要打开的URL"></textarea>
+
+<header class="header">
+    <div class="header-inner">
+        <div class="brand">
+            <div class="logo">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.75 11c-.69 0-1.25.56-1.25 1.25v1.5a1.25 1.25 0 1 0 2.5 0v-1.5C9 11.56 8.44 11 7.75 11zm1.27 4.5a.469.469 0 0 1 .48-.5h5a.47.47 0 0 1 .48.5c-.116 1.316-.759 2.5-2.98 2.5s-2.864-1.184-2.98-2.5zm7.23-4.5c-.69 0-1.25.56-1.25 1.25v1.5a1.25 1.25 0 1 0 2.5 0v-1.5c0-.69-.56-1.25-1.25-1.25z"></path><path fill-rule="evenodd" d="M21.255 3.82a1.725 1.725 0 0 0-2.141-1.195c-.557.16-1.406.44-2.264.866-.78.386-1.647.93-2.293 1.677A18.442 18.442 0 0 0 12 5c-.93 0-1.784.059-2.569.17c-.645-.74-1.505-1.28-2.28-1.664a13.876 13.876 0 0 0-2.265-.866a1.725 1.725 0 0 0-2.141 1.196a23.645 23.645 0 0 0-.69 3.292c-.125.97-.191 2.07-.066 3.112C1.254 11.882 1 13.734 1 15.527C1 19.915 3.13 23 12 23c8.87 0 11-3.053 11-7.473 0-1.794-.255-3.647-.99-5.29c.127-1.046.06-2.15-.066-3.125a23.652 23.652 0 0 0-.689-3.292zM20.5 14c.5 3.5-1.5 6.5-8.5 6.5s-9-3-8.5-6.5c.583-4 3-6 8.5-6s7.928 2 8.5 6z"></path></svg>
+            </div>
+            <a class="name" href="/">GitHub Mirror</a>
+        </div>
+        <div class="header-actions">
+            <a class="btn-ghost" href="https://cdn.jsdelivr.net/gh/521xueweihan/GitHub520@main/hosts" target="_blank" rel="noreferrer">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"></path></svg>
+                GitHub Hosts
+            </a>
+            <button class="icon-btn" id="themeBtn" title="切换主题" aria-label="切换主题">
+                <svg id="iconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
+                <svg id="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+                <svg id="iconAuto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"></rect><path d="M8 21h8M12 18v3"></path></svg>
+            </button>
+        </div>
     </div>
-    <button id="enc">打开</button>
-    <script>
-      const BASE_URL = "mc-lhz.de5.net";
-    </script>
-    <script>
-        const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+</header>
 
-        function toBase32(str) {
-            const bytes = new TextEncoder().encode(str);
-            let bits = 0, value = 0, out = "";
-            for (let i = 0; i < bytes.length; i++) {
-                value = (value << 8) | bytes[i];
-                bits += 8;
-                while (bits >= 5) {
-                    out += ALPHABET[(value >>> (bits - 5)) & 31];
-                    bits -= 5;
-                }
+<main class="main">
+    <div class="hero">
+        <h1>GitHub <span>Mirror</span></h1>
+        <p>输入任意Github仓库链接，然后获取clone/release链接或直接访问</p>
+    </div>
+
+    <div class="url-row">
+        <!-- 默认https://github.com/ -->
+        <input class="url-input" id="in" type="text" value="https://github.com/" placeholder="输入Github仓库链接，然后获取clone/release链接或直接访问" autocomplete="off" spellcheck="false">
+        <button class="url-btn" id="get-btn">获取</button>
+        <button class="url-btn" id="open-btn">打开</button>
+    </div>
+
+    <div class="info-bar">
+        <span>加速服务提供商：<b class="code">Cloudflare</b></span>
+        <a href="https://m5uxi2dvmixgg33n.mc-lhz.de5.net" target="_blank" class="code">https://m5uxi2dvmixgg33n.mc-lhz.de5.net</a>
+    </div>
+
+    <div class="notice">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" x2="12" y1="8" y2="12"></line><line x1="12" x2="12.01" y1="16" y2="16"></line></svg>
+        <p>公益服务，请勿滥用。严禁用于色情、赌博、暴力等违法行为。</p>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-cols">
+            <div class="footer-brand">
+                <h3>GitHub <span>Mirror</span></h3>
+                <p>Github镜像访问工具</p>
+                <div class="footer-social">
+                    <a href="https://github.com/hubporg" target="_blank" rel="noreferrer" title="GitHub">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg>
+                    </a>
+                    <a href="mailto:hubp@hubp.org" title="Email">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"></path><rect x="2" y="4" width="20" height="16" rx="2"></rect></svg>
+                    </a>
+                </div>
+            </div>
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <p>资源</p>
+                    <div class="links">
+                        <a href="https://github.akams.cn" target="_blank">聚合Github加速</a>
+                        <a href="https://m5uxi2dvmixgg33n.mc-lhz.de5.net/mc-lhz" target="_blank">Github主页</a>
+                        <a href="https://mc-lhz.github.io">个人主页</a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <p>关于</p>
+                    <div class="links">
+                        <a href="https://github.akams.cn/about" target="_blank">关于我们</a>
+                        <a href="mailto:minecraft_lhz@163.com" target="_blank">联系我们</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+<!-- 导入jQuery -->
+<script src="https://code.jquery.com/jquery-4.0.0.js"></script>
+<script>
+    const BASE_URL = "mc-lhz.de5.net";
+    const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+    function toBase32(str) {
+        const bytes = new TextEncoder().encode(str);
+        let bits = 0, value = 0, out = "";
+        for (let i = 0; i < bytes.length; i++) {
+            value = (value << 8) | bytes[i];
+            bits += 8;
+            while (bits >= 5) {
+                out += ALPHABET[(value >>> (bits - 5)) & 31];
+                bits -= 5;
             }
-            if (bits > 0) {
-                out += ALPHABET[(value << (5 - bits)) & 31];
-            }
-            return out; // 去掉了末尾的 '=' 填充
         }
+        if (bits > 0) {
+            out += ALPHABET[(value << (5 - bits)) & 31];
+        }
+        return out;
+    }
 
-        document.getElementById("enc").addEventListener("click", function () {
-            // 提取域名和路由
-            var url = document.getElementById("in").value;
-            // 补全https://
-            if (!(url.startsWith("https://") || url.startsWith("http://"))) {
-                url = "https://" + url;
-            }
-            var parsed = new URL(url);
-            var domain = parsed.hostname;
-            var route = parsed.pathname + parsed.search;
-            var base32Domain = toBase32(domain);
+    const $in = document.getElementById("in");
+    const $enc = document.getElementById("enc");
+    const $copyBtn = document.getElementById("copyBtn");
+    let currentLink = "";
 
-            var fullUrl = `https://${base32Domain}.${BASE_URL}${route}`;
-            window.open(fullUrl, "_blank");
+    function buildLink(url) {
+        if (!(url.startsWith("https://") || url.startsWith("http://"))) {
+            url = "https://" + url;
+        }
+        const parsed = new URL(url);
+        const domain = parsed.hostname;
+        const route = parsed.pathname + parsed.search;
+        const base32Domain = toBase32(domain);
+        return "https://" + base32Domain + "." + BASE_URL + route;
+    }
+    function getGithub(url) {
+        // 通过Cloudflare服务获取Github仓库下载/clone链接和release列表
+    }
+    function copyText(text, btn) {
+        function done(ok) {
+            const old = btn.textContent;
+            btn.textContent = ok ? "已复制" : "复制失败";
+            setTimeout(function () { btn.textContent = old; }, 1500);
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+        } else {
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            let ok = false;
+            try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+            document.body.removeChild(ta);
+            done(ok);
+        }
+    }
+    document.getElementById("get-btn").addEventListener("click", function () {
+        const original = document.getElementById("in").value.trim();
+        if (!original) {
+            return;
+        }
+        const fullUrl = buildLink(original);
+        getGithub(fullUrl);
+    });
+    document.getElementById("open-btn").addEventListener("click", function () {
+        const original = document.getElementById("in").value.trim();
+        if (!original) {
+            return;
+        }
+        const fullUrl = buildLink(original);
+        currentLink = fullUrl;
+        window.open(fullUrl, "_blank");
+    });
+
+    document.getElementById("in").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            document.getElementById("open-btn").click();
+        }
+    });
+
+
+    (function initTheme() {
+        let stored = localStorage.getItem("theme") || "system";
+        const icons = { light: "iconSun", dark: "iconMoon", system: "iconAuto" };
+        function apply(mode) {
+            document.documentElement.classList.toggle("dark", mode === "dark");
+            ["iconSun", "iconMoon", "iconAuto"].forEach(function (id) {
+                document.getElementById(id).style.display = id === icons[mode] ? "" : "none";
+            });
+        }
+        function resolve(raw) {
+            if (raw === "dark") return "dark";
+            if (raw === "light") return "light";
+            return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        apply(resolve(stored));
+        document.getElementById("themeBtn").addEventListener("click", function () {
+            const order = ["light", "dark", "system"];
+            stored = order[(order.indexOf(stored) + 1) % order.length];
+            localStorage.setItem("theme", stored);
+            apply(resolve(stored));
         });
-    </script>
-</body>
-</html>
+        window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function (m) {
+            if (localStorage.getItem("theme") === "system") apply(resolve("system"));
+        });
+    })();
+</script>
+
+</body></html>
