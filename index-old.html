@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>mc_lhz个人主页</title>
+    <!-- Font Awesome 6 图标库 -->
+    <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #eef2f7;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            color: #1f2937;
+            line-height: 1.5;
+            scroll-behavior: smooth;
+            min-height: 100vh;
+        }
+
+        .bg-fixed {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .bg-fixed > iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: white;
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: white;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.8;
+        }
+
+        .hero {
+            text-align: center;
+            margin: 3rem 0 4rem;
+        }
+
+        .avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            margin-bottom: 1.5rem;
+            border: 3px solid white;
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .hero .bio {
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.9);
+            max-width: 600px;
+            margin: 0.75rem auto;
+        }
+
+        /* 顶部 TOTP 验证框（带进度条）—— 仅静态结构，JS 后续接入 */
+        .totp-row {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin: 2rem 0 0;
+        }
+
+        .totp-card {
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            min-width: 230px;
+            box-shadow: 0 6px 18px rgba(15,23,42,0.08);
+        }
+
+        .totp-card .totp-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .totp-card .totp-label i {
+            color: #4f46e5;
+        }
+
+        .totp-card .totp-code {
+            font-size: 1.9rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: #111827;
+            font-variant-numeric: tabular-nums;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+
+        .totp-card .totp-expire {
+            font-size: 0.78rem;
+            color: #6b7280;
+            margin-top: 0.35rem;
+        }
+
+        .totp-card .totp-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: #e5e7eb;
+            margin-top: 0.65rem;
+            overflow: hidden;
+        }
+
+        .totp-card .totp-bar > i {
+            display: block;
+            height: 100%;
+            border-radius: 3px;
+            background: #4f46e5;
+        }
+
+        .totp-card .totp-code-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .totp-card .totp-copy-btn {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.45rem 0.8rem;
+            font-size: 0.82rem;
+            color: #4f46e5;
+            background: rgba(79, 70, 229, 0.08);
+            border: 1px solid rgba(79, 70, 229, 0.18);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.18s ease;
+            font-family: inherit;
+            font-weight: 500;
+        }
+
+        .totp-card .totp-copy-btn:hover {
+            background: #4f46e5;
+            color: #fff;
+            border-color: #4f46e5;
+            transform: translateY(-1px);
+        }
+
+        .totp-card .totp-copy-btn:active {
+            transform: translateY(0);
+        }
+
+        .totp-card .totp-copy-btn.is-copied {
+            background: #10b981;
+            border-color: #10b981;
+            color: #fff;
+        }
+
+        .emails {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .email-link {
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            background: rgba(255,255,255,0.2);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+
+        .email-link:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            margin-top: 1.5rem;
+        }
+
+        .social-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: white;
+            color: #4b5563;
+            font-size: 1.4rem;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .social-icon:hover {
+            transform: translateY(-4px);
+            color: white;
+        }
+        .social-icon[data-platform="github"]:hover { background: #000000; }
+        .social-icon[data-platform="gitee"]:hover { background: #c71d23; }
+        .social-icon[data-platform="bilibili"]:hover { background: #00a1d6; }
+        
+
+        section {
+            margin: 4rem 0;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            border-left: 5px solid white;
+            padding-left: 1rem;
+            color: white;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.8rem;
+        }
+
+        .projects-grid a {
+            text-decoration: none;
+            display: block;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            backdrop-filter: blur(4px);
+            height: 100%;
+            min-height: 180px;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 32px rgba(0,0,0,0.15);
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.75rem;
+            color: #1f2937;
+        }
+
+        .card p {
+            color: #4b5563;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .card-tag {
+            display: inline-block;
+            background: #eef2ff;
+            color: #3b82f6;
+            font-size: 0.75rem;
+            padding: 0.2rem 0.8rem;
+            border-radius: 20px;
+            margin-top: 0.5rem;
+        }
+
+        .article-list {
+            list-style: none;
+        }
+
+        .article-list li {
+            background: rgba(255,255,255,0.95);
+            margin-bottom: 1rem;
+            border-radius: 1rem;
+            padding: 1rem 1.5rem;
+            transition: transform 0.2s;
+        }
+
+        .article-list li:hover {
+            transform: translateX(4px);
+        }
+
+        .article-list li a {
+            text-decoration: none;
+            font-weight: 500;
+            color: #1f2937;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .article-date {
+            font-size: 0.8rem;
+            color: #9ca3af;
+        }
+
+        .mxha-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .mxha-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+        }
+
+        .mxha-desc {
+            color: #4b5563;
+            margin-bottom: 1rem;
+        }
+
+        .mxha-qq {
+            background: #eef2ff;
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #3b82f6;
+            margin-top: 0.5rem;
+        }
+
+        .mxha-qq i {
+            margin-right: 0.5rem;
+        }
+
+        .footer {
+            margin-top: 4rem;
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            font-size: 0.8rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 2rem;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+            }
+            .navbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+            .social-links {
+                gap: 0.8rem;
+            }
+            .social-icon {
+                width: 38px;
+                height: 38px;
+                font-size: 1.2rem;
+            }
+            .mxha-title {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="bg-fixed"><iframe src="./background3D.html" frameborder="0"></iframe></div>
+<div class="container">
+    <div class="navbar">
+        <div class="logo">mc_lhz</div>
+        <div class="nav-links">
+            <a href="/speedup.html">Github镜像站</a>
+            <a href="https://mc-lhz.github.io">访问原站</a>
+            <a href="https://nvrs23dipixgo2lunb2weltjn4.mc-lhz.de5.net">Cloudflare访问</a>
+            <a href="#">首页</a>
+            <a href="#projects">项目</a>
+            <a href="#articles">随笔</a>
+        </div>
+    </div>
+
+    <!-- 顶部 TOTP 验证框（带进度条）—— 静态占位，JS 后续接入 -->
+    <div class="totp-row">
+        <div class="totp-card">
+            <div class="totp-label"><span>TOTP 1 - 30s</span><i class="fas fa-shield-alt"></i></div>
+            <div class="totp-code-row">
+                <div class="totp-code" data-totp="">000 000</div>
+                <button class="totp-copy-btn" type="button" aria-label="复制验证码">
+                    <i class="fas fa-copy"></i>
+                    <span class="totp-copy-text">复制</span>
+                </button>
+            </div>
+            <div class="totp-expire">过期时间：<span data-expire="">00:00:30</span></div>
+            <div class="totp-bar"><i style="width: 90%;"></i></div>
+        </div>
+        <div class="totp-card">
+            <div class="totp-label"><span>TOTP 2 - 1hr</span><i class="fas fa-shield-alt"></i></div>
+            <div class="totp-code-row">
+                <div class="totp-code" data-totp="">000 000</div>
+                <button class="totp-copy-btn" type="button" aria-label="复制验证码">
+                    <i class="fas fa-copy"></i>
+                    <span class="totp-copy-text">复制</span>
+                </button>
+            </div>
+            <div class="totp-expire">过期时间：<span data-expire="">01:00:00</span></div>
+            <div class="totp-bar"><i style="width: 20.8%;"></i></div>
+        </div>
+    </div>
+
+    <div class="hero">
+        <img class="avatar" src="images/avatar/abc.jpg" alt="mc_lhz的头像" style="cursor: pointer;">
+        <h1>你好，我是 mc_lhz ✨</h1><div id="greeting" style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.8); margin-top: 0.5rem; font-weight: normal;">🎨 创造属于你的精彩</div>
+        <div class="bio">
+            Github是全球最大的同性交友网站
+        </div>
+        
+        <div class="emails">
+            <a href="mailto:minecraft_lhz@163.com" class="email-link">📧 minecraft_lhz@163.com</a>
+        </div>
+
+        <div class="social-links">
+            <a href="https://github.com/mc-lhz" target="_blank" class="social-icon" data-platform="github"><i class="fab fa-github"></i></a>
+            <a href="https://gitee.com/mc_lhz" target="_blank" class="social-icon" data-platform="gitee"><svg width="20" height="20" viewBox="0 0 90 90"><circle cx="44.854" cy="44.854" r="44.854" fill="#C71D23"/><path fill="#fff" d="M67.559 39.871H42.086a2.217 2.217 0 0 0-2.216 2.215l-.001 5.538a2.213 2.213 0 0 0 2.214 2.215h15.508c1.223 0 2.215.991 2.215 2.215v1.107a6.645 6.645 0 0 1-6.645 6.645H32.117a2.215 2.215 0 0 1-2.215-2.215V36.55a6.645 6.645 0 0 1 6.644-6.645h31.006a2.22 2.22 0 0 0 2.217-2.215l.003-5.537a2.213 2.213 0 0 0-2.212-2.217l-.001.002H36.548c-9.175 0-16.613 7.437-16.613 16.612v31.01c0 1.223.992 2.215 2.215 2.215h32.672c8.258 0 14.952-6.694 14.952-14.952V42.086a2.215 2.215 0 0 0-2.215-2.215z"/></svg></a>
+            <a href="https://space.bilibili.com/1121746503" target="_blank" class="social-icon" data-platform="bilibili"><i class="fab fa-bilibili"></i></a>
+        </div>
+    </div>
+
+
+    <!-- 项目作品区 -->
+    <section id="projects">
+        <h2 class="section-title">项目大全</h2>
+        <div class="projects-grid">
+           
+            <a href="https://github.com/mc-lhz/AYES2026" target="_blank">
+                <div class="card">
+                    <h3>FormPilot</h3>
+                    <p>AYES2026 Project，一个自动填表MCP服务器</p>
+                    <span class="card-tag">查看仓库</span>
+                </div>
+            </a>
+            <a href="/NBChemistryOffline/chemical/new?moduleId=9" target="_blank">
+                <div class="card">
+                    <h3>Chm实验室</h3>
+                    <p>已开启器材选项</p>
+                    <span class="card-tag">点击打开</span>
+                </div>
+            </a>
+            <a href="/NBPhysicsOffline/physics/new?moduleId=1" target="_blank">
+                <div class="card">
+                    <h3>Phy实验室</h3>
+                    <p>没啥特殊的</p>
+                    <span class="card-tag">点击打开</span>
+                </div>
+            </a>
+            <a href="/MirroredWebPage/Desmos" target="_blank">
+                <div class="card">
+                    <h3>Desmos离线版</h3>
+                    <p>函数图像生成器</p>
+                    <span class="card-tag">点击使用</span>
+                </div>
+            </a>
+            <a href="/MirroredWebPage/Geogebra" target="_blank">
+                <div class="card">
+                    <h3>Geogebra离线版</h3>
+                    <p>涵盖几何(2D/3D)、代数、统计、微积分等领域，支持图形与代数双向联动及微积分运算</p>
+                    <span class="card-tag">点击使用</span>
+                </div>
+            </a>
+            <a href="/ChunkbaseSeedmapOffline" target="_blank" style="text-decoration: none; display: block;">
+                <div class="card">
+                    <h3>SeedMap离线版</h3>
+                    <p>MC笑传之Chunkbase</p>
+                    <span class="card-tag">点击使用</span>
+                </div>
+            </a>
+            <a href="/XMYZStudent" target="_blank">
+                <div class="card">
+                    <h3>厦一学社镜像</h3>
+                    <p>DJrtCu9i版本，防止哪天玄学狗狗跑路了（</p>
+                    <span class="card-tag">设计/前端</span>
+                </div>
+            </a>
+            <a href="/MirroredWebPage" target="_blank">
+                <div class="card">
+                    <h3>离线工具</h3>
+                    <p>包含Desmos、Geogebra等</p>
+                    <span class="card-tag">点击使用</span>
+                </div>
+            </a>
+            
+        </div>
+    </section>
+
+    <!-- 博客/文章区 -->
+    <section id="articles">
+        <h2 class="section-title">近期随笔</h2>
+        <ul class="article-list">
+            <li>
+                <a href="#">
+                    <span>看我干嘛？</span>
+                    <span class="article-date">2026-09-17</span>
+                </a>
+            </li>
+        </ul>
+    </section>
+
+
+    <div class="mxha-card">
+        <div class="mxha-title">MXHA · 厦门高中生MC联盟</div>
+        <div class="mxha-desc">
+            厦门地区 Minecraft 爱好者聚集地<br>
+            交流建筑、红石、小游戏、服务器
+        </div>
+        <div class="mxha-qq">
+            <i class="fab fa-qq"></i> QQ群：1076713731
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.8rem; color: #6b7280;">
+            如果你感兴趣，欢迎加入我们！
+        </div>
+    </div>
+
+
+    <div class="footer" onload=""></div>
+        © 2026 mc_lhz · 心若有所向往 · 何惧道阻且长
+    </div>
+</div>
+
+<!-- TOTP 生成库（本仓库已有，浏览器下 generateTOTP 挂到全局） -->
+<script src="generate-totp.js"></script>
+<script>
+
+    document.querySelectorAll('.nav-links a, .hero a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+            const hash = this.getAttribute('href');
+            if (hash && hash !== '#') {
+                const target = document.querySelector(hash);
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+        });
+    });
+
+
+    const avatar = document.querySelector('.avatar');
+    if (avatar) {
+        avatar.style.cursor = 'pointer';
+        avatar.addEventListener('click', () => {
+            const messages = ["🎉 被你发现啦！", "👋 你好呀～", "⭐ 谢谢你来看我", "💻 一起加油！", "🌟 愿你今天开心", "🔮 这是一个隐藏彩蛋！", "💖 你点击了我的头像~"];
+            alert(messages[Math.floor(Math.random() * messages.length)]);
+        });
+    }
+
+
+    // ---------- 顶部 TOTP 验证框 ----------
+    // Base32 密钥
+    var TOTP_SECRET = "LSESKCQWEFSPPMZQ";
+
+    // 第 1 张卡：30 秒一刷；第 2 张卡：1 小时一刷
+    var TOTP_CONFIGS = [
+        { period: 30,   digits: 6 },
+        { period: 3600, digits: 6 }
+    ];
+
+    function formatCode(code) {
+        return code.slice(0, 3) + ' ' + code.slice(3);
+    }
+
+    function formatTime(remainingSec) {
+        var total = Math.floor(remainingSec);
+        var hh = Math.floor(total / 3600);
+        var mm = Math.floor((total % 3600) / 60);
+        var ss = total % 60;
+        var pad = function (n) { return n < 10 ? '0' + n : String(n); };
+        if (hh > 0) {
+            return pad(hh) + ':' + pad(mm) + ':' + pad(ss);
+        }else{
+            return pad(mm) + ':' + pad(ss);
+        }
+    }
+
+    function updateTOTP() {
+        var now = Date.now() / 1000;
+        var cards = document.querySelectorAll('.totp-card');
+        cards.forEach(function (card, i) {
+            var cfg = TOTP_CONFIGS[i];
+            if (!cfg) return;
+            // 验证码（在周期边界才会变化）
+            var code = generateTOTP(TOTP_SECRET, { time: now, period: cfg.period, digits: cfg.digits });
+            card.querySelector('[data-totp]').textContent = formatCode(code);
+            // 过期时间 = 当前周期窗口结束时刻
+            var remaining = cfg.period - (now % cfg.period);
+            var expireEpoch = remaining;
+            card.querySelector('[data-expire]').textContent = formatTime(expireEpoch);
+            // 进度条：剩余比例（满→空，表示时间正在流逝）
+            var pct = (remaining / cfg.period) * 100;
+            card.querySelector('.totp-bar > i').style.width = pct.toFixed(1) + '%';
+        });
+    }
+
+    updateTOTP();
+    setInterval(updateTOTP, 50);
+
+    // 绑定两个卡片的复制按钮
+    document.querySelectorAll('.totp-card').forEach(function (card) {
+        var btn = card.querySelector('.totp-copy-btn');
+        if (!btn) return;
+        var textEl = btn.querySelector('.totp-copy-text');
+        var iconEl = btn.querySelector('i');
+        var originalText = textEl ? textEl.textContent : '复制';
+        var originalIcon = iconEl ? iconEl.className : '';
+
+        btn.addEventListener('click', function () {
+            var codeEl = card.querySelector('[data-totp]');
+            if (!codeEl) return;
+            var code = codeEl.textContent.replace(/\s+/g, '');
+            navigator.clipboard.writeText(code).then(function () {
+                btn.classList.add('is-copied');
+                if (textEl) textEl.textContent = '已复制';
+                if (iconEl) iconEl.className = 'fas fa-check';
+                setTimeout(function () {
+                    btn.classList.remove('is-copied');
+                    if (textEl) textEl.textContent = originalText;
+                    if (iconEl) iconEl.className = originalIcon;
+                }, 1500);
+            });
+        });
+    });
+
+</script>
+
+</body></html>
