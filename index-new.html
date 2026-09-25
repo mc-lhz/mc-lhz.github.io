@@ -71,7 +71,7 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 120px;
+            height: 80px;
             z-index: 1000;
         }
 
@@ -80,7 +80,7 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 120px;
+            height: 80px;
             z-index: 1000;
             background: transparent;
             transition: background 0.4s, backdrop-filter 0.4s, -webkit-backdrop-filter 0.4s, border-color 0.4s, box-shadow 0.4s;
@@ -108,7 +108,7 @@
         .top-bar.scrolled .header-actions a { color: var(--text-2); }
 
         .top-bar .g-wrap {
-            height: 120px;
+            height: 80px;
             display: flex;
             align-items: center;
         }
@@ -120,7 +120,7 @@
             margin-right: 24px;
             flex-shrink: 0;
             cursor: pointer;
-            transition: all 0.25s ease;
+            transition: transform 0.25s ease;
         }
 
         .logo-wrap img {
@@ -191,7 +191,7 @@
             color: var(--text);
             line-height: 120px;
             cursor: pointer;
-            transition: 0.5s;
+            transition: color 0.5s;
             white-space: nowrap;
         }
 
@@ -528,7 +528,7 @@
             border: 1px solid rgba(60, 128, 240, 0.18);
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.18s ease;
+            transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
             font-family: inherit;
             font-weight: 500;
         }
@@ -755,12 +755,6 @@
             font-size: 28px;
         }
 
-        .card-icon-wrap img.card-icon {
-            height: 56px;
-            max-width: 56px;
-            object-fit: contain;
-        }
-
         .card-info {
             flex: 1;
             min-width: 0;
@@ -836,7 +830,7 @@
             border-radius: 14px;
             border: none;
             cursor: pointer;
-            transition: all 0.25s ease;
+            transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
             font-family: inherit;
         }
 
@@ -1129,30 +1123,16 @@
             text-align: justify;
         }
 
-        /* news fade 切换 */
-        .news-fade-enter-active,
-        .news-fade-leave-active {
-            transition: all 0.35s var(--ease);
-        }
-        .news-fade-enter-from {
-            opacity: 0;
-            transform: translateX(16px);
-        }
-        .news-fade-leave-to {
-            opacity: 0;
-            transform: translateX(-16px);
-        }
-
         .preview-fading {
             opacity: 0;
             transform: translateX(16px);
-            transition: all 0.35s var(--ease);
+            transition: opacity 0.35s var(--ease), transform 0.35s var(--ease);
         }
 
         .preview-shown {
             opacity: 1;
             transform: translateX(0);
-            transition: all 0.35s var(--ease);
+            transition: opacity 0.35s var(--ease), transform 0.35s var(--ease);
         }
 
         /* —— MXHA —— */
@@ -1443,19 +1423,6 @@
             color: #999;
         }
 
-        /* —— skeleton shimmer（保留原站动效） —— */
-        .skeleton-shimmer {
-            background: linear-gradient(90deg, #e8edf5 25%, #f0f4fa 37%, #e8edf5 63%);
-            background-size: 400% 100%;
-            animation: shimmer 1.4s ease infinite;
-            border-radius: 6px;
-        }
-
-        @keyframes shimmer {
-            0% { background-position: 100% 50%; }
-            100% { background-position: 0 50%; }
-        }
-
         /* —— 响应式 —— */
         @media (max-width: 1024px) {
             .feature-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1548,8 +1515,6 @@
                         <li data-target="#projects"><a href="#projects">项目大全</a></li>
                         <li data-target="#articles"><a href="#articles">近期随笔</a></li>
                         <li><a href="/speedup.html">Github镜像站</a></li>
-                        <li><a href="https://mc-lhz.github.io" target="_blank" rel="noopener">访问原站</a></li>
-                        <li><a href="https://nvrs23dipixgo2lunb2weltjn4.mc-lhz.de5.net" target="_blank" rel="noopener">Cloudflare</a></li>
                     </ul>
                 </div>
                 <div class="f1"></div>
@@ -1572,8 +1537,8 @@
                             </div>
                             <div class="intro-body">
                                 <h1>你好，我是 <span class="gradient-text">mc_lhz</span> ✨</h1>
-                                <div id="greeting">🎨 创造属于你的精彩</div>
-                                <p class="bio">Github是全球最大的同性交友网站。这里是我的个人主页 —— 项目、随笔与一些小工具。</p>
+                                <div id="greeting"></div>
+                                <p class="bio">Github是全球最大的同性交友网站</p>
                                 <div class="emails">
                                     <a href="mailto:minecraft_lhz@163.com" class="email-link">📧 minecraft_lhz@163.com</a>
                                 </div>
@@ -1788,7 +1753,7 @@
                     <h2 class="section-title-main">近期<span class="gradient-text">随笔</span></h2>
                     <span class="title-serif" aria-hidden="true"></span>
                 </div>
-                <p class="section-subtitle">聚焦生活动态 · 共享边角想法</p>
+                <p class="section-subtitle">使用CI/CD自动化部署</p>
                 <div class="news-layout">
                     <div class="news-list" id="newsList">
                         <div class="news-item active" data-index="0">
@@ -1811,7 +1776,7 @@
                             <div class="news-preview-info">
                                 <h3 class="news-preview-title">看我干嘛？</h3>
                                 <span class="news-preview-date">2026-09-17</span>
-                                <p class="news-preview-summary">一篇很短的随笔。你既然点进来了，那就说明……你在看我干嘛？</p>
+                                <p class="news-preview-summary">一篇很短的随笔</p>
                             </div>
                         </div>
                     </div>
@@ -1843,11 +1808,11 @@
                     <a href="#home">网站首页</a>
                     <a href="#projects">项目大全</a>
                     <a href="#articles">近期随笔</a>
-                    <a href="/speedup.html">Github镜像站</a>
+                    <a href="/speedup.html" target="_blank" rel="noopener">Github镜像站</a>
                     <a href="https://mc-lhz.github.io" target="_blank" rel="noopener">访问原站</a>
                 </div>
                 <div class="footer-copyright">
-                    <p>© 2026 mc_lhz · 心若有所向往 · 何惧道阻且长</p>
+                    <p>© 2026 mc_lhz</p>
                     <p>minecraft_lhz@163.com</p>
                 </div>
             </div>
@@ -1863,7 +1828,7 @@
                     <span class="float-popup-title">快捷入口</span>
                     <button class="float-popup-close" id="floatClose" type="button" aria-label="关闭">×</button>
                 </div>
-                <a class="float-popup-card" href="/speedup.html">
+                <a class="float-popup-card" href="/speedup.html" target="_blank" rel="noopener">
                     <div class="float-popup-card-icon"><i class="fas fa-bolt"></i></div>
                     <div class="float-popup-card-info">
                         <div class="float-popup-card-title">Github镜像站</div>
@@ -1877,6 +1842,13 @@
                         <div class="float-popup-card-desc">mc-lhz.github.io</div>
                     </div>
                 </a>
+                <a class="float-popup-card" href="https://nvrs23dipixgo2lunb2weltjn4.mc-lhz.de5.net" target="_blank" rel="noopener">
+                    <div class="float-popup-card-icon"><svg viewBox="0 0 460 271.2" width="48" height="48" aria-hidden="true" data-sentry-element="svg" data-sentry-source-file="CloudflareLogo.tsx"><path fill="#FF9911" d="M328.6,125.6c-0.8,0-1.5,0.6-1.8,1.4l-4.8,16.7c-2.1,7.2-1.3,13.8,2.2,18.7    c3.2,4.5,8.6,7.1,15.1,7.4l26.2,1.6c0.8,0,1.5,0.4,1.9,1c0.4,0.6,0.5,1.5,0.3,2.2c-0.4,1.2-1.6,2.1-2.9,2.2l-27.3,1.6    c-14.8,0.7-30.7,12.6-36.3,27.2l-2,5.1c-0.4,1,0.3,2,1.4,2h93.8c1.1,0,2.1-0.7,2.4-1.8c1.6-5.8,2.5-11.9,2.5-18.2    c0-37-30.2-67.2-67.3-67.2C330.9,125.5,329.7,125.5,328.6,125.6z" data-sentry-element="path" data-sentry-source-file="CloudflareLogo.tsx"></path><path fill="#FF5E1F" d="M292.8,204.4c2.1-7.2,1.3-13.8-2.2-18.7c-3.2-4.5-8.6-7.1-15.1-7.4l-123.1-1.6    c-0.8,0-1.5-0.4-1.9-1s-0.5-1.4-0.3-2.2c0.4-1.2,1.6-2.1,2.9-2.2l124.2-1.6c14.7-0.7,30.7-12.6,36.3-27.2l7.1-18.5    c0.3-0.8,0.4-1.6,0.2-2.4c-8-36.2-40.3-63.2-78.9-63.2c-35.6,0-65.8,23-76.6,54.9c-7-5.2-15.9-8-25.5-7.1    c-17.1,1.7-30.8,15.4-32.5,32.5c-0.4,4.4-0.1,8.7,0.9,12.7c-27.9,0.8-50.2,23.6-50.2,51.7c0,2.5,0.2,5,0.5,7.5    c0.2,1.2,1.2,2.1,2.4,2.1h227.2c1.3,0,2.5-0.9,2.9-2.2L292.8,204.4z" data-sentry-element="path" data-sentry-source-file="CloudflareLogo.tsx"></path></svg></div>
+                    <div class="float-popup-card-info">
+                        <div class="float-popup-card-title">Cloudflare访问</div>
+                        <div class="float-popup-card-desc">nvrs23dipixgo2lunb2weltjn4.mc-lhz.de5.net</div>
+                    </div>
+                </a>
                 <a class="float-popup-card" href="mailto:minecraft_lhz@163.com">
                     <div class="float-popup-card-icon"><i class="fas fa-envelope"></i></div>
                     <div class="float-popup-card-info">
@@ -1887,7 +1859,7 @@
             </div>
         </div>
         <button class="floating-btn" id="floatingBtn" type="button" aria-label="快捷服务">
-            <img src="images/portal/icon-float.png" alt="" onerror="this.style.display='none';this.parentNode.innerHTML='&#xf075;';">
+            <img src="https://www.svgrepo.com/show/521261/web.svg" alt="" onerror="this.style.display='none';this.parentNode.innerHTML='&#xf075;';">
         </button>
     </div>
 </div>
