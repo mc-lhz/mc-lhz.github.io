@@ -43,15 +43,7 @@
             border: 0;
             display: block;
         }
-        .bg-veil {
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            pointer-events: none;
-            background: linear-gradient(180deg, rgba(238,244,255,0.08) 0%, rgba(245,247,250,0.14) 40%, rgba(250,251,252,0.28) 100%);
-        }
-
-        /* —— 页面壳（背景交给 bg-veil + 3D iframe） —— */
+        /* —— 页面壳（背景交给 3D iframe） —— */
         .party-portal {
             background: transparent;
             min-height: 100vh;
@@ -83,13 +75,11 @@
             height: 80px;
             z-index: 1000;
             background: transparent;
-            transition: background 0.4s, backdrop-filter 0.4s, -webkit-backdrop-filter 0.4s, border-color 0.4s, box-shadow 0.4s;
+            transition: background 0.4s, border-color 0.4s, box-shadow 0.4s;
         }
 
         .top-bar.scrolled {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.96);
             box-shadow: 0 2px 16px rgba(31, 38, 135, 0.06);
         }
 
@@ -1495,7 +1485,6 @@
 <div class="bg-fixed">
     <iframe src="./background3D.html" title="3D background"></iframe>
 </div>
-<div class="bg-veil" aria-hidden="true"></div>
 
 <div class="party-portal">
     <!-- sticky header -->
