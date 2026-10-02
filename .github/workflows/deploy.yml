@@ -1,15 +1,19 @@
-name: Deploy
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [ master ]
   workflow_dispatch:
 
+# deploy-pages 需要这两个权限；GITHUB_TOKEN 自动提供，无需配置任何 secret
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
+# 新推送取消上一次未完成的部署，避免并发写 Pages
 concurrency:
-  group: pages-deploy
+  group: pages
   cancel-in-progress: true
 
 jobs:
@@ -18,40 +22,18 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
+      # withastro/action 会：探测 lockfile 包管理器 → 安装依赖 → npm run build
+      # → actions/upload-pages-artifact 上传 dist/
       - name: Build
-        run: npm run build
-
-      # 校验 frontmatter / 链接等在构建期就会失败，不要带着错误产物发布
-      - name: Check build output
-        run: test -f dist/index.html
-
-      - uses: actions/upload-pages-artifact@v4
-        with:
-          path: ./dist
+        uses: withastro/action@v5
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      # 沿用仓库现有的 pages remote（mc-lhz/mc-lhz.github.io），
-      # 所以不需要在 Settings → Pages 里切换 Source。
-      - name: Deploy to GitHub Pages
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          # pages remote 只保留一次提交历史
-          git init -q
-          git checkout -b main
-          git add -A
-          git commit -q -m "deploy: ${{ github.sha }}"
-
-          git push -f https://x-access-token:${{ secrets.DEPLOY_TOKEN }}@github.com/mc-lhz/mc-lhz.github.io.git main:master
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

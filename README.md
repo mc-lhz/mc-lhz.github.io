@@ -127,11 +127,38 @@ npm config set registry https://registry.npmmirror.com
 ## 部署
 
 `.github/workflows/deploy.yml` 在 push 到 `master` 时触发：
-`checkout` → `setup-node` → `npm ci` → `npm run build` → 强制推送到
-`mc-lhz/mc-lhz.github.io` 的 `master`。
+`checkout` → `withastro/action`（装依赖 + 构建 + 上传产物）→ `deploy-pages`。
 
-需要仓库配置一个 `DEPLOY_TOKEN` secret（对该仓库有 contents 写权限的 PAT）。
-仓库 Settings → Pages 保持 `Deploy from a branch` 即可，本方案不依赖 Actions 部署。
+**不需要任何 secret**，用仓库自带的 `GITHUB_TOKEN`（`pages: write` + `id-token: write`）。
+
+### 重要：代码必须在 Pages 仓库里
+
+`actions/deploy-pages` 用的是 `${{ github.token }}`，即**当前仓库**的令牌，
+无法跨仓库部署。因此：
+
+- ✅ 本工程需位于 `mc-lhz/mc-lhz.github.io` 仓库内
+- ❌ 若放在 `mc-lhz/TheTrueMine`，`deploy` 步骤会失败（推不到另一个仓库的 Pages）
+
+原来的做法是双仓库（源码在 `TheTrueMine`，构建产物推到 `mc-lhz.github.io` 的
+`master`），那条路必须依赖长期 PAT，过期即断部署，现已废弃。
+
+### 一次性配置
+
+在 `mc-lhz/mc-lhz.github.io` 仓库 `Settings → Pages`：
+**Source 选 `GitHub Actions`**（不是 `Deploy from a branch`）。
+
+配好后 `mc-lhz.github.io` 由 Actions 产物提供，仓库里提交的源码文件不再直接对外服务。
+
+### 迁移步骤
+
+```bash
+# 1. 把工程推到 Pages 仓库
+git remote add pages-src https://github.com/mc-lhz/mc-lhz.github.io.git
+git push pages-src master
+
+# 2. 在 Settings → Pages 把 Source 改为 GitHub Actions
+# 3. 手动跑一次 workflow（Actions → Deploy to GitHub Pages → Run workflow）验证
+```
 
 ## 已知问题
 
