@@ -5,6 +5,33 @@ const D = 'dist';
 let fail = 0;
 const ok = (c, msg) => { console.log(`  ${c ? '\u2713' : '\u2717'} ${msg}`); if (!c) fail++; };
 
+console.log('\n[0] 样式作用域健全性');
+// Astro 默认给 <style> 内的选择器加 [data-astro-cid-*]，但该属性只会打给
+// 组件自身模板里的元素。若样式写在只含 <slot/> 的布局里，HTML 上一个 cid 都没有，
+// 整份样式表静默失效（主页会退化成未样式化的原始 HTML）。
+// 判据：CSS 里出现 cid 作用域，而产物 HTML 里没有 —— 必然是这种错误。
+{
+  const cssFiles = readdirSync(`${D}/_astro`).filter((f) => f.endsWith('.css'));
+  let scopedHits = 0;
+  for (const f of cssFiles) {
+    const c = readFileSync(`${D}/_astro/${f}`, 'utf8');
+    scopedHits += (c.match(/data-astro-cid-/g) || []).length;
+  }
+  const htmlCid =
+    (readFileSync(`${D}/index.html`, 'utf8').match(/data-astro-cid-/g) || []).length;
+  ok(scopedHits === 0 || htmlCid > 0,
+    `CSS cid ${scopedHits} 处 / HTML cid ${htmlCid} 处（两者不应单边为 0）`);
+
+  // 抽查主页关键选择器未被 scope 化
+  const mainCss = cssFiles
+    .map((f) => readFileSync(`${D}/_astro/${f}`, 'utf8'))
+    .find((c) => c.includes('.glass-card')) ?? '';
+  for (const sel of ['.glass-card', '.indicator', '.news-item', '.top-bar', ':root']) {
+    const scoped = new RegExp(sel.replace('.', '\\.') + '\\[data-astro-cid-').test(mainCss);
+    ok(!scoped, `${sel} 未被 scope 化`);
+  }
+}
+
 console.log('\n[1] 主页：最新 5 篇文章');
 const home = readFileSync(`${D}/index.html`, 'utf8');
 const re = /data-index="(\d+)"\s+href="([^"]+)"[\s\S]*?news-item-title">([^<]+)</g;

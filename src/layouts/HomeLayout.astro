@@ -4,7 +4,13 @@ import BaseLayout from './BaseLayout.astro';
 
 <BaseLayout title="mc_lhz个人主页" description="mc_lhz 的个人主页、项目与随笔">
 <Fragment slot="head">
-<style>
+<!--
+  必须 is:global。本组件模板里只有 <slot />，真正的标记由 index.astro 渲染。
+  若用默认 scoped，Astro 会把所有选择器加上 [data-astro-cid-xxx]，但那个属性
+  只打给本组件模板内的元素 —— 而这里没有 —— 结果 HTML 上一个 cid 都没有，
+  整份样式表完全失效（主页会变成未样式化的原始 HTML）。
+-->
+<style is:global>
         :root {
             --primary: #3c80f0;
             --primary-2: #5a9bff;
