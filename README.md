@@ -131,34 +131,30 @@ npm config set registry https://registry.npmmirror.com
 
 **不需要任何 secret**，用仓库自带的 `GITHUB_TOKEN`（`pages: write` + `id-token: write`）。
 
-### 重要：代码必须在 Pages 仓库里
+### 重要：Pages 仓库就是源码仓库
 
 `actions/deploy-pages` 用的是 `${{ github.token }}`，即**当前仓库**的令牌，
-无法跨仓库部署。因此：
+无法跨仓库部署。因此源码与部署目标必须是**同一个仓库**。
 
-- ✅ 本工程需位于 `mc-lhz/mc-lhz.github.io` 仓库内
-- ❌ 若放在 `mc-lhz/TheTrueMine`，`deploy` 步骤会失败（推不到另一个仓库的 Pages）
-
-原来的做法是双仓库（源码在 `TheTrueMine`，构建产物推到 `mc-lhz.github.io` 的
-`master`），那条路必须依赖长期 PAT，过期即断部署，现已废弃。
+本仓库即 `mc-lhz/mc-lhz.github.io`，天然满足。原先的 `mc-lhz/TheTrueMine`
+是建站初期误建的仓库（Pages 要求仓库名与域名一致），早已删除并弃用，
+remote 已重指向到本仓库。
 
 ### 一次性配置
 
-在 `mc-lhz/mc-lhz.github.io` 仓库 `Settings → Pages`：
-**Source 选 `GitHub Actions`**（不是 `Deploy from a branch`）。
+在 `Settings → Pages`：**Source 选 `GitHub Actions`**（不是 `Deploy from a branch`）。
 
-配好后 `mc-lhz.github.io` 由 Actions 产物提供，仓库里提交的源码文件不再直接对外服务。
+配好后站点由 Actions 产物提供，仓库里提交的源码文件不再直接对外服务。
 
-### 迁移步骤
+### 日常发布
 
 ```bash
-# 1. 把工程推到 Pages 仓库
-git remote add pages-src https://github.com/mc-lhz/mc-lhz.github.io.git
-git push pages-src master
-
-# 2. 在 Settings → Pages 把 Source 改为 GitHub Actions
-# 3. 手动跑一次 workflow（Actions → Deploy to GitHub Pages → Run workflow）验证
+git add -A
+git commit -m "..."
+git push origin master        # 或推送分支后在 GitHub 上合并PR
 ```
+
+推送后 workflow 自动构建部署，约 1~2 分钟。
 
 ## 已知问题
 
