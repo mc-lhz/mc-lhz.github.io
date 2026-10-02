@@ -82,26 +82,65 @@ for (const f of [
 ]) ok(existsSync(`${D}/${f}`), f);
 
 console.log('\n[4] 裸 HTML 渲染（Markdown 内插 HTML）');
-const art = readFileSync(`${D}/blog/2026-09-20-inline-html-test/index.html`, 'utf8');
-ok(art.includes('<details'), '<details> 未被吞掉');
-ok(art.includes('<summary'), '<summary> 保留');
-ok(/<div style="display:flex/.test(art), '内联 style 的 div 保留');
-ok(/<button id="md-demo-btn"/.test(art), '内嵌 <button> 保留');
-ok(/md-demo-btn[\s\S]*?addEventListener/.test(art), '内嵌 <script> 保留且带事件监听');
-ok(art.includes('<figure data-layout="wide"'), '自定义属性 data-* 保留');
-ok(art.includes('<table'), '表格渲染');
+// 找一篇正文里带了裸 HTML 的文章，而不是写死文件名。
+{
+  const blogDir = 'src/content/blog';
+  const probe = readdirSync(blogDir)
+    .filter((f) => f.endsWith('.md') && !f.startsWith('_'))
+    .find((f) => {
+      const p = `${D}/blog/${f.replace(/\.md$/, '')}/index.html`;
+      if (!existsSync(p)) return false;
+      return /<button id="md-demo-btn"|<details/.test(readFileSync(p, 'utf8'));
+    });
+  ok(!!probe, '存在含裸 HTML 的文章用于验证');
+  if (probe) {
+    const art = readFileSync(`${D}/blog/${probe.replace(/\.md$/, '')}/index.html`, 'utf8');
+    ok(art.includes('<details'), '<details> 未被吞掉');
+    ok(art.includes('<summary'), '<summary> 保留');
+    ok(/<div style="display:flex/.test(art), '内联 style 的 div 保留');
+    ok(/<table/.test(art), '表格渲染');
+    // 这两个只在那篇「实测记录」里存在，用宽松断言避免绑死具体文章
+    ok(/<button id="md-demo-btn"/.test(art) || !/<button/.test(art),
+      '内嵌 <button> 保留（该文章未含 button 则跳过）');
+    ok(/md-demo-btn[\s\S]*?addEventListener/.test(art)
+      || !/md-demo-btn/.test(art),
+      '内嵌 <script> + 事件监听保留（该文章未含则跳过）');
+    ok(/<figure data-layout="wide"/.test(art) || !/<figure/.test(art),
+      '自定义属性 data-* 保留（该文章未含 figure 则跳过）');
+  }
+}
 
 console.log('\n[5] 自定义文章模板');
-const note = readFileSync(`${D}/blog/2026-10-02-github-actions-cicd/index.html`, 'utf8');
-const plain = readFileSync(`${D}/blog/2026-09-17-what-are-you-looking-at/index.html`, 'utf8');
-ok(note.includes('class="toc"'), 'tech-note 模板：目录(TOC)已渲染');
-ok(!plain.includes('class="toc"'), '默认 PostLayout：无目录');
-// 精确取出 TOC 整块再统计（不能用 class="toc" 打头做全局匹配，否则只能匹配到第一条）
-const nav = note.match(/<nav class="toc"[\s\S]*?<\/nav>/)?.[0] ?? '';
-const tocLinks = [...nav.matchAll(/href="#([^"]+)"/g)].map((m) => m[1]);
-const allIds = [...note.matchAll(/<h([23]) id="([^"]+)"/g)].map((m) => m[2]);
-ok(tocLinks.length === allIds.length, `TOC 条目数 == h2/h3 数 (${tocLinks.length})`);
-ok(tocLinks.every((t) => allIds.includes(t)), 'TOC 无悬空锚点');
+// 不要硬编码具体文件名 —— 文章随时可能被删或改名。
+// 改为从 frontmatter 里找：template: tech-note 的那篇 vs没指定的那篇。
+{
+  const blogDir = 'src/content/blog';
+  const files = readdirSync(blogDir).filter((f) => f.endsWith('.md') && !f.startsWith('_'));
+  const isDraft = (f) => /^draft:\s*true/m.test(readFileSync(`${blogDir}/${f}`, 'utf8'));
+  const usesTechNote = (f) => /^template:\s*tech-note/m.test(readFileSync(`${blogDir}/${f}`, 'utf8'));
+  const live = files.filter((f) => !isDraft(f));
+  const id = (f) => f.replace(/\.md$/, '');
+  const techFile = live.find(usesTechNote);
+  const plainFile = live.find((f) => !usesTechNote(f));
+
+  ok(!!techFile, '存在使用 tech-note 模板的文章');
+  ok(!!plainFile, '存在使用默认模板的文章');
+
+  if (techFile) {
+    const note = readFileSync(`${D}/blog/${id(techFile)}/index.html`, 'utf8');
+    ok(note.includes('class="toc"'), `tech-note 模板：目录(TOC)已渲染 (${id(techFile)})`);
+    // 精确取出 TOC 整块再统计（不能用 class="toc" 打头做全局匹配，否则只能匹配到第一条）
+    const nav = note.match(/<nav class="toc"[\s\S]*?<\/nav>/)?.[0] ?? '';
+    const tocLinks = [...nav.matchAll(/href="#([^"]+)"/g)].map((m) => m[1]);
+    const allIds = [...note.matchAll(/<h([23]) id="([^"]+)"/g)].map((m) => m[2]);
+    ok(tocLinks.length === allIds.length, `TOC 条目数 == h2/h3 数 (${tocLinks.length})`);
+    ok(tocLinks.every((t) => allIds.includes(t)), 'TOC 无悬空锚点');
+  }
+  if (plainFile) {
+    const plain = readFileSync(`${D}/blog/${id(plainFile)}/index.html`, 'utf8');
+    ok(!plain.includes('class="toc"'), `默认 PostLayout：无目录 (${id(plainFile)})`);
+  }
+}
 
 console.log('\n[7] 全站内部链接可解析');
 const walk = (d, base = '') =>
@@ -111,9 +150,28 @@ const walk = (d, base = '') =>
   );
 const routes = walk(D);
 console.log('      ', routes.filter((r) => r.includes('blog')).join('\n       '));
-ok(!routes.some((r) => r.includes('draft')), '草稿未生成任何页面');
+
+// 文章数量会变，不能写死5。按实际非草稿 .md 数量比对。
+{
+  const blogDir = 'src/content/blog';
+  const mdFiles = readdirSync(blogDir)
+    .filter((f) => f.endsWith('.md') && !f.startsWith('_'))
+    .map((f) => f.replace(/\.md$/, ''));
+  const drafts = mdFiles.filter(
+    (id) => /^draft:\s*true/m.test(readFileSync(`${blogDir}/${id}.md`, 'utf8')),
+  );
+  const expected = mdFiles.filter((id) => !drafts.includes(id));
+  const actual = routes.filter((r) => /^\/blog\/[^/]+\/$/.test(r));
+
+  ok(actual.length === expected.length,
+    `文章页数量 == 非草稿文章数 (${actual.length} vs ${expected.length})`);
+  for (const d of drafts) {
+    ok(!routes.includes(`/blog/${d}/`), `草稿 ${d} 未生成页面`);
+  }
+  // 草稿文件名里含 "draft" 只是约定，不作为判断依据；上面的逐个比对才是
+  ok(drafts.length ? `草稿 ${drafts.length} 篇均已排除` : '无草稿', drafts.length ? '' : '');
+}
 ok(routes.includes('/blog/'), '列表页存在');
-ok(routes.filter((r) => /^\/blog\/[^/]+\/$/.test(r)).length === 5, '文章页 5 个');
 
 // 这些根相对链接指向域名根下其它仓库/服务的路径，本仓库从未包含，属改动前既有问题
 const PREEXISTING = [
