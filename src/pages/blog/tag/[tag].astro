@@ -1,0 +1,67 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PostCard from '../../../components/PostCard.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+
+  const tags = [...new Set(posts.flatMap((p) => p.data.tags))];
+  const sorted = tags.sort((a, b) => b.localeCompare(a, 'zh-Hans-CN'));
+
+  return sorted.map((tag) => ({
+    params: { tag },
+    props: {
+      posts: posts
+        .filter((p) => p.data.tags.includes(tag))
+        .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()),
+    },
+  }));
+}
+
+const { tag } = Astro.params;
+const { posts } = Astro.props;
+---
+
+<BaseLayout title={`#${tag} · mc_lhz`} description={`mc_lhz 的随笔：标签 ${tag}`}>
+  <div class="blog-shell">
+    <header class="blog-head">
+      <a class="blog-back" href="/blog/">← 返回全部随笔</a>
+      <h1>#{tag}</h1>
+      <p class="blog-sub">共 {posts.length} 篇</p>
+    </header>
+
+    <div class="blog-list">
+      {posts.map((post) => (
+        <PostCard
+          href={`/blog/${post.id}/`}
+          title={post.data.title}
+          date={post.data.pubDate}
+          description={post.data.description}
+          tags={post.data.tags}
+        />
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style is:global>
+  .blog-shell { max-width: 780px; margin: 0 auto; padding: 40px 24px 80px; }
+  .blog-back {
+    display: inline-block;
+    color: var(--text-3);
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 24px;
+    transition: color .2s;
+  }
+  .blog-back:hover { color: var(--primary); }
+  .blog-head h1 { font-size: 32px; font-weight: 700; letter-spacing: -.5px; }
+  .blog-sub { margin-top: 8px; color: var(--text-3); font-size: 14px; }
+  .blog-list { margin-top: 28px; display: flex; flex-direction: column; gap: 14px; }
+
+  @media (max-width: 640px) {
+    .blog-shell { padding: 24px 16px 60px; }
+    .blog-head h1 { font-size: 26px; }
+  }
+</style>

@@ -1,0 +1,39 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+# deploy-pages 需要这两个权限；GITHUB_TOKEN 自动提供，无需配置任何 secret
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 新推送取消上一次未完成的部署，避免并发写 Pages
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # withastro/action 会：探测 lockfile 包管理器 → 安装依赖 → npm run build
+      # → actions/upload-pages-artifact 上传 dist/
+      - name: Build
+        uses: withastro/action@v5
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

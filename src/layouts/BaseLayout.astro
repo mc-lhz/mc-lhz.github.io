@@ -1,0 +1,30 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'mc_lhz 的个人主页与随笔' } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>{title}</title>
+<meta name="description" content={description}>
+
+<link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
+
+<link rel="icon" href="/images/avatar/abc.jpg">
+
+<!-- 供子布局注入 <style> / <meta> 等 -->
+<slot name="head" />
+</head>
+<body>
+<slot />
+</body>
+</html>

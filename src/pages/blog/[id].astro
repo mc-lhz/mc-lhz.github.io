@@ -1,0 +1,38 @@
+---
+import { getCollection, render } from 'astro:content';
+import PostLayout from '../../layouts/PostLayout.astro';
+import TechNoteLayout from '../../layouts/tech-note.astro';
+
+// 构建期为每篇文章生成一个静态页面：/blog/<id>/
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map((post) => ({ params: { id: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+
+const { title, description, pubDate, updatedDate, tags, template } = post.data;
+
+// 中文按 400 字/分钟，英文按 220 词/分钟估算
+const raw = typeof post.body === 'string' ? post.body : '';
+const cjk = (raw.match(/[\u4e00-\u9fa5]/g) || []).length;
+const words = raw.replace(/[\u4e00-\u9fa5]/g, ' ').split(/\s+/).filter(Boolean).length;
+const readingTime = Math.max(1, Math.round(cjk / 400 + words / 220));
+
+const meta = { title, description, pubDate, updatedDate, tags, readingTime };
+---
+
+{/*
+  frontmatter 里写 template: tech-note 即切换到带目录的技术笔记模板；
+  不写或写其它值则用默认 PostLayout。这就是「自定义文章页面模板」。
+*/}
+{template === 'tech-note' ? (
+  <TechNoteLayout {...meta} headings={headings}>
+    <Content />
+  </TechNoteLayout>
+) : (
+  <PostLayout {...meta}>
+    <Content />
+  </PostLayout>
+)}

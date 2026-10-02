@@ -1,0 +1,75 @@
+---
+import PostLayout from './PostLayout.astro';
+
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  title: string;
+  description?: string;
+  pubDate: Date;
+  updatedDate?: Date;
+  tags?: string[];
+  readingTime?: number;
+  headings: Heading[];
+}
+
+const { headings = [], ...rest } = Astro.props;
+
+// 只取 h2/h3，避免目录被 h4 撑爆
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+---
+
+<PostLayout {...rest}>
+  <Fragment slot="aside">
+    {toc.length > 1 && (
+      <nav class="toc" aria-label="目录">
+        <p class="toc-title">目录</p>
+        <ul>
+          {toc.map((h) => (
+            <li class={h.depth === 3 ? 'toc-h3' : ''}>
+              <a href={`#${h.slug}`}>{h.text}</a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )}
+  </Fragment>
+
+  <slot />
+</PostLayout>
+
+<!-- 同 PostLayout：TOC 链接指向 markdown 生成的锚点，需全局 -->
+<style is:global>
+  .toc {
+    margin-bottom: 28px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 14px;
+  }
+  .toc-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: var(--text-3);
+    margin-bottom: 10px;
+  }
+  .toc ul { list-style: none; padding: 0; margin: 0; }
+  .toc li { margin: 0; }
+  .toc a {
+    display: block;
+    padding: 5px 0 5px 12px;
+    color: var(--text-2);
+    text-decoration: none;
+    border-left: 2px solid var(--border);
+    border-bottom: none;
+    transition: all .18s;
+  }
+  .toc a:hover { color: var(--primary); border-left-color: var(--primary); }
+  .toc-h3 a { padding-left: 26px; font-size: 13px; color: var(--text-3); }
+</style>
