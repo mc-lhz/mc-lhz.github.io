@@ -32,6 +32,30 @@ console.log('\n[0] 样式作用域健全性');
   }
 }
 
+console.log('\n[0] 字体完整性');
+// 截断的 woff2 会返回 200 且 wOF2 魔数正确，但浏览器 OTS 解析失败（OTS parsing error），
+// 只有比对「头部声明长度 vs 实际字节数」才能发现。CI 每次构建都应拦一次。
+{
+  const dir = `${D}/vendor/fontawesome/webfonts`;
+  if (existsSync(dir)) {
+    for (const f of readdirSync(dir).filter((x) => x.endsWith('.woff2')).sort()) {
+      const b = readFileSync(`${dir}/${f}`);
+      const sig = b.toString('ascii', 0, 4);
+      const declared = b.readUInt32BE(8);
+      const good = sig === 'wOF2' && declared === b.length;
+      ok(good, `${f}  ${b.length} 字节 / 头声明 ${declared}${good ? '' : '  <-- 截断或损坏'}`);
+    }
+    // ttf 只校验 sfnt 版本号
+    for (const f of readdirSync(dir).filter((x) => x.endsWith('.ttf')).sort()) {
+      const sfnt = readFileSync(`${dir}/${f}`).readUInt32BE(0);
+      ok([0x00010000, 0x4f54544f, 0x74727565].includes(sfnt),
+        `${f}  sfnt=0x${sfnt.toString(16)}`);
+    }
+  } else {
+    ok(false, '字体目录缺失: vendor/fontawesome/webfonts');
+  }
+}
+
 console.log('\n[1] 主页：最新 5 篇文章');
 const home = readFileSync(`${D}/index.html`, 'utf8');
 const re = /data-index="(\d+)"\s+href="([^"]+)"[\s\S]*?news-item-title">([^<]+)</g;
