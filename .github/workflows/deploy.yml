@@ -1,0 +1,57 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # 校验 frontmatter / 链接等在构建期就会失败，不要带着错误产物发布
+      - name: Check build output
+        run: test -f dist/index.html
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # 沿用仓库现有的 pages remote（mc-lhz/mc-lhz.github.io），
+      # 所以不需要在 Settings → Pages 里切换 Source。
+      - name: Deploy to GitHub Pages
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # pages remote 只保留一次提交历史
+          git init -q
+          git checkout -b main
+          git add -A
+          git commit -q -m "deploy: ${{ github.sha }}"
+
+          git push -f https://x-access-token:${{ secrets.DEPLOY_TOKEN }}@github.com/mc-lhz/mc-lhz.github.io.git main:master

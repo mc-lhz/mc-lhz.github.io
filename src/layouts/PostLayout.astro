@@ -1,0 +1,212 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  pubDate: Date;
+  updatedDate?: Date;
+  tags?: string[];
+  readingTime?: number;
+}
+
+const { title, description, pubDate, updatedDate, tags = [], readingTime } = Astro.props;
+
+// YYYY-MM-DD（按本地时区，避免 toISOString 的 UTC 偏移导致日期差一天）
+const fmt = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+---
+
+<BaseLayout title={`${title} · mc_lhz`} description={description}>
+  <div class="post-shell">
+    <header class="post-head">
+      <a class="post-back" href="/">← 返回主页</a>
+      <h1 class="post-title">{title}</h1>
+      {description && <p class="post-desc">{description}</p>}
+      <div class="post-meta">
+        <span><i class="fas fa-calendar"></i> {fmt(pubDate)}</span>
+        {updatedDate && <span><i class="fas fa-pen"></i> 更新于 {fmt(updatedDate)}</span>}
+        {readingTime !== undefined && <span><i class="fas fa-hourglass-half"></i> 约 {readingTime} 分钟</span>}
+      </div>
+      {tags.length > 0 && (
+        <div class="post-tags">
+          {tags.map((t) => <a class="post-tag" href={`/blog/tag/${encodeURIComponent(t)}/`}>#{t}</a>)}
+        </div>
+      )}
+    </header>
+
+    <!-- 子模板可注入的附加区域（如 tech-note 的目录） -->
+    <slot name="aside" />
+
+    <!-- 文章正文：Markdown 与内嵌完整 HTML 都在这里渲染 -->
+    <article class="post-body">
+      <slot />
+    </article>
+
+    <footer class="post-foot">
+      <a class="post-back" href="/">← 返回主页</a>
+    </footer>
+  </div>
+</BaseLayout>
+
+<!--
+  注意：这里必须 is:global。
+  .post-body 里的元素（h2/p/code…）由 markdown 渲染而来，不带本组件的
+  scope id（data-astro-cid-*），若用默认 scoped 样式，所有后代选择器都会失效。
+-->
+<style is:global>
+  .post-shell {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  .post-head { margin-bottom: 36px; }
+
+  .post-back {
+    display: inline-block;
+    color: var(--text-3);
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 24px;
+    transition: color .2s;
+  }
+  .post-back:hover { color: var(--primary); }
+
+  .post-title {
+    font-size: 34px;
+    line-height: 1.3;
+    font-weight: 700;
+    letter-spacing: -.5px;
+  }
+
+  .post-desc { margin-top: 12px; color: var(--text-2); font-size: 16px; }
+
+  .post-meta {
+    margin-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    font-size: 13px;
+    color: var(--text-3);
+  }
+  .post-meta i { margin-right: 5px; }
+
+  .post-tags { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .post-tag {
+    font-size: 12px;
+    color: var(--primary);
+    background: rgba(60, 128, 240, .1);
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-decoration: none;
+  }
+  .post-tag:hover { background: rgba(60, 128, 240, .18); }
+
+  /* ---------- 正文：Markdown + 裸 HTML ---------- */
+  .post-body {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 36px 40px;
+    box-shadow: 0 2px 16px rgba(26, 35, 50, .06);
+    font-size: 16px;
+  }
+
+  .post-body > :first-child { margin-top: 0; }
+  .post-body > :last-child { margin-bottom: 0; }
+
+  .post-body h1, .post-body h2, .post-body h3, .post-body h4 {
+    margin: 1.6em 0 .6em;
+    line-height: 1.35;
+    font-weight: 700;
+    scroll-margin-top: 20px;
+  }
+  .post-body h1 { font-size: 28px; }
+  .post-body h2 { font-size: 23px; padding-left: 12px; border-left: 4px solid var(--primary); }
+  .post-body h3 { font-size: 19px; }
+  .post-body h4 { font-size: 17px; color: var(--text-2); }
+
+  .post-body p { margin: 1em 0; }
+
+  .post-body a {
+    color: var(--primary);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(60, 128, 240, .3);
+  }
+  .post-body a:hover { border-bottom-color: var(--primary); }
+
+  .post-body ul, .post-body ol { margin: 1em 0; padding-left: 1.6em; }
+  .post-body li { margin: .4em 0; }
+  .post-body li::marker { color: var(--text-3); }
+
+  .post-body blockquote {
+    margin: 1.4em 0;
+    padding: 12px 18px;
+    border-left: 4px solid var(--primary-2);
+    background: #f5f8fd;
+    border-radius: 0 8px 8px 0;
+    color: var(--text-2);
+  }
+  .post-body blockquote > :first-child { margin-top: 0; }
+  .post-body blockquote > :last-child { margin-bottom: 0; }
+
+  .post-body code {
+    font-family: var(--mono);
+    font-size: .88em;
+    background: #eef2f7;
+    color: #c0392b;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .post-body pre {
+    margin: 1.4em 0;
+    padding: 16px 18px;
+    background: #1e2430;
+    border-radius: 10px;
+    overflow-x: auto;
+    line-height: 1.6;
+  }
+  .post-body pre code { background: none; color: #e6edf3; padding: 0; font-size: 13.5px; }
+
+  .post-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    display: block;
+    margin: 1.4em auto;
+  }
+
+  .post-body hr { margin: 2.4em 0; border: none; border-top: 1px solid var(--border); }
+
+  .post-body table {
+    width: 100%;
+    margin: 1.4em 0;
+    border-collapse: collapse;
+    font-size: 14.5px;
+    display: block;
+    overflow-x: auto;
+  }
+  .post-body th, .post-body td { border: 1px solid var(--border); padding: 9px 13px; text-align: left; }
+  .post-body th { background: #f5f8fd; font-weight: 600; }
+
+  /* 内嵌裸 HTML 常见元素的兜底样式 */
+  .post-body details {
+    margin: 1.4em 0;
+    padding: 12px 16px;
+    background: #f7f9fc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .post-body summary { cursor: pointer; font-weight: 600; color: var(--primary); user-select: none; }
+  .post-body summary::marker { color: var(--text-3); }
+
+  .post-foot { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .post-foot .post-back { margin-bottom: 0; }
+
+  @media (max-width: 640px) {
+    .post-shell { padding: 24px 16px 60px; }
+    .post-title { font-size: 26px; }
+    .post-body { padding: 24px 20px; }
+  }
+</style>

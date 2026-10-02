@@ -1,0 +1,74 @@
+---
+interface Props {
+  href: string;
+  title: string;
+  date: Date;
+  description?: string;
+  tags?: string[];
+}
+
+const { href, title, date, description, tags = [] } = Astro.props;
+
+const fmt = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+---
+
+<a class="post-card" href={href}>
+  <div class="post-card-head">
+    <h3 class="post-card-title">{title}</h3>
+    <span class="post-card-date">{fmt(date)}</span>
+  </div>
+  {description && <p class="post-card-desc">{description}</p>}
+  {tags.length > 0 && (
+    <div class="post-card-tags">
+      {tags.map((t) => <span>#{t}</span>)}
+    </div>
+  )}
+</a>
+
+<style>
+  .post-card {
+    display: block;
+    padding: 20px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform .2s, box-shadow .2s, border-color .2s;
+  }
+  .post-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(60, 128, 240, .4);
+    box-shadow: 0 6px 20px rgba(26, 35, 50, .08);
+  }
+
+  .post-card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .post-card-title { font-size: 19px; font-weight: 700; line-height: 1.4; }
+  .post-card-date { font-size: 13px; color: var(--text-3); white-space: nowrap; }
+
+  .post-card-desc {
+    margin-top: 8px;
+    font-size: 14.5px;
+    color: var(--text-2);
+    line-height: 1.7;
+  }
+
+  .post-card-tags { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .post-card-tags span {
+    font-size: 12px;
+    color: var(--primary);
+    background: rgba(60, 128, 240, .1);
+    padding: 2px 9px;
+    border-radius: 20px;
+  }
+
+  @media (max-width: 640px) {
+    .post-card-head { flex-direction: column; gap: 4px; }
+  }
+</style>

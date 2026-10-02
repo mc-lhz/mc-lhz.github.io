@@ -1,0 +1,16 @@
+{
+  "name": "mc-lhz-homepage",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "verify": "astro build && node scripts/verify-build.mjs",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^7.3.5"
+  }
+}

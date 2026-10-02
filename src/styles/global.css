@@ -1,0 +1,28 @@
+/* 全局设计变量 —— 必须放独立文件并全局引入。
+   若写在组件的 <style> 里，Astro 会给它加组件 scope，
+   变成 :root:where([data-astro-cid-xxx])，而 <html> 上没有该属性，变量将全部失效。 */
+:root {
+  --primary: #3c80f0;
+  --primary-2: #5a9bff;
+  --text: #1a2332;
+  --text-2: #515a6e;
+  --text-3: #888;
+  --border: #e3e8f0;
+  --surface: #ffffff;
+  --bg: #eef2f7;
+  --font: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    微软雅黑, Arial, sans-serif;
+  --mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
