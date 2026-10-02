@@ -286,6 +286,7 @@ const fmtDate = (d: Date) =>
                                 class:list={['news-item', { active: i === 0 }]}
                                 data-index={i}
                                 href={`/blog/${post.id}/`}
+                                target="_blank"
                             >
                                 <span class="news-item-index">{String(i + 1).padStart(2, '0')}</span>
                                 <div class="news-item-content">
