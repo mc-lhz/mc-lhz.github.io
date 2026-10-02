@@ -560,32 +560,72 @@ const fmtDate = (d: Date) =>
         });
     }
 
-    /* ---------- news list (active + preview fade) ---------- */
+    /* ---------- news list：hover 展开 + 预览联动，点击跳转 ---------- */
+    var newsList = document.getElementById('newsList');
     var newsItems = document.querySelectorAll('#newsList .news-item');
     var preview = document.getElementById('newsPreview');
 
-    newsItems.forEach(function (item) {
-        item.addEventListener('click', function () {
-            if (item.classList.contains('active')) return;
-            newsItems.forEach(function (x) { x.classList.remove('active'); });
-            item.classList.add('active');
+    var newsCurrent = -1;        // 当前高亮/预览的条目序号
+    var newsSwapTimer = null;
 
-            if (!preview) return;
-            var title = item.querySelector('.news-item-title');
-            var date = item.querySelector('.news-item-date');
-            preview.classList.remove('preview-shown');
-            preview.classList.add('preview-fading');
-            setTimeout(function () {
-                var t = preview.querySelector('.news-preview-title');
-                var d = preview.querySelector('.news-preview-date');
-                var cover = preview.querySelector('.cover-placeholder span');
-                if (t && title) t.textContent = title.textContent;
-                if (d && date) d.textContent = date.textContent;
-                if (cover && title) cover.textContent = title.textContent;
-                preview.classList.remove('preview-fading');
-                preview.classList.add('preview-shown');
-            }, 350);
+    function newsActivate(idx) {
+        if (idx === newsCurrent) return;
+        newsCurrent = idx;
+        newsItems.forEach(function (x, i) { x.classList.toggle('active', i === idx); });
+        if (!preview) return;
+
+        var item = newsItems[idx];
+        var title = item.querySelector('.news-item-title');
+        var date = item.querySelector('.news-item-date');
+        preview.classList.remove('preview-shown');
+        preview.classList.add('preview-fading');
+        if (newsSwapTimer) clearTimeout(newsSwapTimer);
+        newsSwapTimer = setTimeout(function () {
+            var t = preview.querySelector('.news-preview-title');
+            var d = preview.querySelector('.news-preview-date');
+            var cover = preview.querySelector('.cover-placeholder span');
+            if (t && title) t.textContent = title.textContent;
+            if (d && date) d.textContent = date.textContent;
+            if (cover && title) cover.textContent = title.textContent;
+            preview.classList.remove('preview-fading');
+            preview.classList.add('preview-shown');
+        }, 350);
+    }
+
+    // 预览卡自身也是链接，指向当前条目
+    function newsSyncPreviewHref() {
+        if (!preview) return;
+        var item = newsItems[newsCurrent];
+        if (item) preview.setAttribute('href', item.getAttribute('href') || '#');
+    }
+
+    newsItems.forEach(function (item, i) {
+        // mouseenter 而非 mouseover：避免子元素间移动时反复触发
+        item.addEventListener('mouseenter', function () {
+            newsActivate(i);
+            newsSyncPreviewHref();
         });
+        // 点击交给 <a href> 自行跳转，这里不拦截
+    });
+
+    // 鼠标整个离开列表后回到第一条
+    if (newsList) {
+        newsList.addEventListener('mouseleave', function () {
+            newsActivate(0);
+            newsSyncPreviewHref();
+        });
+    }
+
+    // 初始化：确保第一条 active、预览链接正确
+    newsActivate(0);
+    newsSyncPreviewHref();
+
+    // 触摸设备无 hover，改为点击时切换预览（不阻止导航）
+    newsItems.forEach(function (item, i) {
+        item.addEventListener('touchstart', function () {
+            newsActivate(i);
+            newsSyncPreviewHref();
+        }, { passive: true });
     });
 
     /* ---------- float popup ---------- */

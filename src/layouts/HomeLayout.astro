@@ -907,44 +907,22 @@ import BaseLayout from './BaseLayout.astro';
             transition: background 0.35s ease;
         }
 
-        .news-item:hover {
-            height: 68px;
-        }
-
-        .news-item:hover::before {
-            background: rgba(255, 255, 255, 0.55);
-        }
-
-        .news-item:hover .news-item-arrow {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .news-item:hover .news-item-index {
-            width: 36px;
-            height: 36px;
-            font-size: 14px;
-        }
-
-        .news-item:hover .news-item-title {
-            font-size: 15px;
-            white-space: normal;
-        }
-
-        .news-item:hover .news-item-date {
-            opacity: 1;
-        }
-
-        .news-item.active {
+        /* 展开态：:hover 或 .active 任一成立。
+           原来这里是 `.news-item:hover { height: 68px }` —— 与基线 68px 相同，
+           等于没写，展开动画（->128px）只绑在 .active 上。
+           而条目改成 <a href> 后点击会直接跳走，.active 永远停在第一条，
+           于是「展开 + 右侧预览联动」这套交互实际已是死代码。
+           现在改为 hover 即展开，并由 JS 联动右侧预览；点击仍负责跳转文章。 */
+        .news-item:is(:hover, .active) {
             height: 128px;
         }
 
-        .news-item.active::before {
+        .news-item:is(:hover, .active)::before {
             background: linear-gradient(348deg, #c3d4ed00, #c0d5ff85);
             box-shadow: 0 4px 20px rgba(31, 38, 135, 0.08), 0 0 0 1px rgba(60, 128, 240, 0.12);
         }
 
-        .news-item.active .news-item-index {
+        .news-item:is(:hover, .active) .news-item-index {
             width: 42px;
             height: 42px;
             font-size: 14px;
@@ -952,14 +930,18 @@ import BaseLayout from './BaseLayout.astro';
             color: #fff;
         }
 
-        .news-item.active .news-item-title {
-            font-size: 18px !important;
+        .news-item:is(:hover, .active) .news-item-title {
+            font-size: 18px;
             font-weight: 600;
             color: #3c80f0;
             white-space: normal;
         }
 
-        .news-item.active .news-item-arrow {
+        .news-item:is(:hover, .active) .news-item-date {
+            opacity: 1;
+        }
+
+        .news-item:is(:hover, .active) .news-item-arrow {
             opacity: 1;
             transform: translateX(0);
             color: #3c80f0;
