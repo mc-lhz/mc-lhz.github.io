@@ -52,3 +52,4 @@ AI会自动下载、加载技能。
 
 ## 兼容性
 <img src="https://photogzmaz.photo.store.qq.com/psc?/V53q7xcI1ZwgCC06T0SV3XcObw3aL9Ny/TmEUgtj9EK6.7V8ajmQrEO13Tvm7MpBDbenIzSrZNH3UnGSA2si*5nNwbLPkAhcgbjcet5bXhUD.FxykJ1gBLG*CmWXxaEpdRBXRyOXLqnE!/b&bo=wgVuA8IFbgMDByI!&rf=viewer_4&t=5" referrerpolicy="no-referrer">
+<img src="https://photogzmaz.photo.store.qq.com/psc?/V53q7xcI1ZwgCC06T0SV3XcObw3aL9Ny/TmEUgtj9EK6.7V8ajmQrEOomOh1fBBoHgVmQ18dsa7ug*r*PAxUDegPPlvSkMqbDA3KlZ0ssDWS4oy8NU4bOYqvypEmkdBWxcIaCsk9uCLU!/b&bo=AAXQAgAF0AIDByI!&rf=viewer_4&t=5" referrerpolicy="no-referrer">
