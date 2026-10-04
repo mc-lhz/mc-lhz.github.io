@@ -31,7 +31,7 @@ draft: false
 AI会自动下载、加载技能。
 
 ## 方式二（手动下载，适合开发者）
-1. 手动下载技能包：打开[https://m5uxi2dvmixgg33n.mc-lhz.de5.net/mc-lhz/591iqAutomatic](https://m5uxi2dvmixgg33n.mc-lhz.de5.net/mc-lhz/591iqAutomatic)，点击绿色**<> code**按钮，点击**Download ZIP**按钮，下载技能包。
+1. 手动下载技能包：打开[https://m5uxi2dvmixgg33n.mc-lhz.de5.net/mc-lhz/591iqAutomatic](https://m5uxi2dvmixgg33n.mc-lhz.de5.net/mc-lhz/591iqAutomatic)，点击绿色**code**按钮，点击**Download ZIP**按钮，下载技能包。
 2. 导入技能包：打开你的AI Agent，找到添加技能的入口，上传技能包，校验通过后安装。
 
 ## 使用
