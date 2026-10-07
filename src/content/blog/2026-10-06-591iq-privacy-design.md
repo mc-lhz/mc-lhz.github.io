@@ -9,24 +9,23 @@ tags: [安全, 隐私, 自动化, 591iq]
 
 这套技能会接触到 **学号、姓名、班级、身份证号、考号、成绩、成长档案**——其中大部分是**未成年人**的个人信息。所以我把整份设计单独写成了一篇完整文章：它不讲功能，讲的是**边界画在哪、谁来守、怎么证明守住了**。
 
-## 为什么单独做成一页
+## 全文怎么读
 
-这篇文章原本发布在综评系统内部（作为一条写实记录）。搬到博客这边时我把它做成**独立页面**而不是直接贴进正文，原因很实际：
+这篇文章原本发布在综评系统内部（作为一条写实记录），后来搬成**独立整页**发布。嫌跳转麻烦的话，现在它已经作为一篇正式文章挂在博客里了，URL 变成本文底部链接指向的地址：
 
-- 它自带完整的设计系统（配色、卡片、11 张 SVG 示意图），塞进博客正文会和博客的样式打架；
-- 独立页面**样式完全隔离**，读者看到的就是原稿的样子；
-- 博客的构建管线不需要为它做任何特殊处理。
+- 正文是**完整 HTML**（配色、卡片、11 张 SVG 示意图都在），md 里直接内嵌，样式不与博客打架；
+- 构建管线不需要为它做任何特殊处理，`npm run build` 照常出页面。
 
 <div style="display:flex;gap:12px;align-items:center;background:#f5f8fd;padding:14px 18px;border-radius:10px;margin:1.4em 0">
   <span style="font-size:26px">📄</span>
   <div style="flex:1">
     <div style="font-weight:700">全文（含 11 张示意图）</div>
-    <div style="font-size:13px;color:#666">独立页面 · 约 3.2 万字符 · 无外部脚本</div>
+    <div style="font-size:13px;color:#666">正式文章 · 约 3.2 万字符 · 无外部脚本</div>
   </div>
-  <a href="/591iq-privacy-design.html" style="white-space:nowrap;padding:8px 16px;background:#3c80f0;color:#fff;border-radius:8px;text-decoration:none;font-size:14px">打开 →</a>
+  <a href="/blog/2026-10-06-591iq-privacy-design-full/" style="white-space:nowrap;padding:8px 16px;background:#3c80f0;color:#fff;border-radius:8px;text-decoration:none;font-size:14px">打开 →</a>
 </div>
 
-**[→ 点击打开完整文章](/591iq-privacy-design.html)**
+**[→ 点击打开完整文章](/blog/2026-10-06-591iq-privacy-design-full/)**
 
 ## 三个我认为最值得抄的部分
 

@@ -1,102 +1,43 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>新壹我（591iq）技能 · 学生隐私与安全保护设计全解</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231d5bb8'/%3E%3Cpath d='M16 4l9 4v7c0 5.5-3.7 9.8-9 12-5.3-2.2-9-6.5-9-12V8z' fill='%23fff' opacity='.95'/%3E%3Cpath d='M11.5 16l3 3 5.5-6' stroke='%231d5bb8' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+---
+title: 学生隐私与安全保护设计全解 · 591iqAutomatic（完整版）
+description: 学生隐私与安全保护设计全解全文——含 11 张示意图，从文档层制度、代码层机制到智能审计三道防线，讲清边界画在哪、谁来守、怎么证明守住。
+pubDate: 2026-10-06
+tags: [安全, 隐私, 自动化, 591iq]
+---
+
+<!-- 本文原为独立整页（样式完全隔离），现作为正式文章发布；正文为完整 HTML，未做任何删减。 -->
+
+<!--
+  正文为完整 HTML（原文照搬，未删减）。
+  原文样式表已做作用域处理：所有选择器前缀 .padoc，
+  :root / body 的声明改由该包裹层承载 —— 否则 *{margin:0}、body{…}、
+  table/th/td、.card 这类通用规则会连带改掉博客外壳的排版。
+  改这份 CSS 时请保留 .padoc 前缀，并让内容始终位于 <div class="padoc"> 内。
+-->
+
 <style>
-  :root{
+.padoc{
     --ink:#17233b; --ink-2:#3f5170; --ink-3:#7d8da8;
     --line:#e4eaf3; --bg:#f4f7fb; --card:#ffffff;
     --brand:#1d5bb8; --brand-2:#2f7ce0; --accent:#0e9f6e;
     --warn:#d97706; --danger:#dc2626; --chip:#eef3fb;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Noto Sans SC",system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased}
-  .page{max-width:920px;margin:0 auto;padding:42px 36px 60px}
-  .serif{font-family:"Noto Serif SC",serif}
-
-  .badge{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1d5bb8,#2f7ce0);color:#fff;font-size:12px;font-weight:700;letter-spacing:.5px;padding:7px 14px;border-radius:999px;box-shadow:0 4px 14px rgba(29,91,184,.28)}
-  .badge svg{width:14px;height:14px}
-  .title{font-family:"Noto Serif SC",serif;font-size:30px;line-height:1.32;font-weight:900;margin:22px 0 10px}
-  .meta{color:var(--ink-3);font-size:13px;display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:22px}
-  .meta b{color:var(--ink-2);font-weight:500}
-  .lede{font-size:16px;color:var(--ink-2);border-left:4px solid var(--brand);padding:4px 0 4px 16px;margin-bottom:36px}
-
-  .fig{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin:18px 0 34px;box-shadow:0 8px 26px rgba(26,42,74,.06);text-align:center}
-  .fig svg{width:100%;height:auto}
-  .fig .cap{font-size:12.5px;color:var(--ink-3);margin-top:12px;text-align:center}
-
-  section{margin-bottom:42px}
-  .sec-h{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-  .sec-h .n{width:30px;height:30px;border-radius:9px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex:none}
-  .sec-h h2{font-size:21px;font-weight:700;font-family:"Noto Serif SC",serif}
-  .sec-h .sub{font-size:12.5px;color:var(--ink-3);margin-left:auto}
-
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;box-shadow:0 6px 20px rgba(26,42,74,.05)}
-  .card p{margin:6px 0;color:var(--ink-2)}
-  .card p b{color:var(--ink)}
-  .card .lead{color:var(--ink);font-size:15px;margin-bottom:10px}
-
-  table{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:8px}
-  colgroup col:first-child{width:20%}
-  colgroup col:nth-child(2){width:46%}
-  colgroup col:last-child{width:34%}
-  th{font-size:12.5px;color:var(--ink-3);font-weight:500;text-align:left;padding:9px 10px;border-bottom:2px solid var(--line)}
-  td{font-size:13.5px;color:var(--ink);padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:top}
-  tr:last-child td{border-bottom:none}
-  .ok{color:var(--accent);font-weight:700}
-  .warn{color:var(--warn);font-weight:700}
-  .danger{color:var(--danger);font-weight:700}
-  code{background:#eef3fb;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px;color:var(--brand)}
-
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
-  .mech{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:0 6px 20px rgba(26,42,74,.05)}
-  .mech h3{font-size:15.5px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:8px}
-  .mech h3 .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);flex:none}
-  .mech ul{margin:6px 0 0 2px;padding-left:18px}
-  .mech li{font-size:13.5px;color:var(--ink-2);margin:4px 0}
-  .mech li b{color:var(--ink)}
-
-  .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;margin-right:6px}
-  .pill.g{background:#e7f7f1;color:var(--accent)}
-  .pill.o{background:#fdf3e3;color:var(--warn)}
-  .pill.r{background:#fdeaea;color:var(--danger)}
-
-  .publish{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:46px;padding:20px;border:1.5px dashed var(--brand);border-radius:16px;background:linear-gradient(135deg,#eef4ff,#f6f9ff)}
-  .publish svg{width:22px;height:22px}
-  .publish span{font-weight:700;color:var(--brand);font-size:15px;letter-spacing:.5px}
-
-  @media(max-width:640px){
-    .page{padding:26px 16px 40px}
-    .title{font-size:23px}
-    .grid2{grid-template-columns:1fr}
-    colgroup col:first-child{width:28%}
-    colgroup col:nth-child(2){width:40%}
-    colgroup col:last-child{width:32%}
-  }
+  }.padoc *{box-sizing:border-box;margin:0;padding:0}.padoc{font-family:"Noto Sans SC",system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--bg);line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased}.padoc .page{max-width:920px;margin:0 auto;padding:42px 36px 60px}.padoc .serif{font-family:"Noto Serif SC",serif}.padoc .badge{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1d5bb8,#2f7ce0);color:#fff;font-size:12px;font-weight:700;letter-spacing:.5px;padding:7px 14px;border-radius:999px;box-shadow:0 4px 14px rgba(29,91,184,.28)}.padoc .badge svg{width:14px;height:14px}.padoc .title{font-family:"Noto Serif SC",serif;font-size:30px;line-height:1.32;font-weight:900;margin:22px 0 10px}.padoc .meta{color:var(--ink-3);font-size:13px;display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:22px}.padoc .meta b{color:var(--ink-2);font-weight:500}.padoc .lede{font-size:16px;color:var(--ink-2);border-left:4px solid var(--brand);padding:4px 0 4px 16px;margin-bottom:36px}.padoc .fig{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin:18px 0 34px;box-shadow:0 8px 26px rgba(26,42,74,.06);text-align:center}.padoc .fig svg{width:100%;height:auto}.padoc .fig .cap{font-size:12.5px;color:var(--ink-3);margin-top:12px;text-align:center}.padoc section{margin-bottom:42px}.padoc .sec-h{display:flex;align-items:center;gap:10px;margin-bottom:16px}.padoc .sec-h .n{width:30px;height:30px;border-radius:9px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex:none}.padoc .sec-h h2{font-size:21px;font-weight:700;font-family:"Noto Serif SC",serif}.padoc .sec-h .sub{font-size:12.5px;color:var(--ink-3);margin-left:auto}.padoc .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;box-shadow:0 6px 20px rgba(26,42,74,.05)}.padoc .card p{margin:6px 0;color:var(--ink-2)}.padoc .card p b{color:var(--ink)}.padoc .card .lead{color:var(--ink);font-size:15px;margin-bottom:10px}.padoc table{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:8px}.padoc colgroup col:first-child{width:20%}.padoc colgroup col:nth-child(2){width:46%}.padoc colgroup col:last-child{width:34%}.padoc th{font-size:12.5px;color:var(--ink-3);font-weight:500;text-align:left;padding:9px 10px;border-bottom:2px solid var(--line)}.padoc td{font-size:13.5px;color:var(--ink);padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:top}.padoc tr:last-child td{border-bottom:none}.padoc .ok{color:var(--accent);font-weight:700}.padoc .warn{color:var(--warn);font-weight:700}.padoc .danger{color:var(--danger);font-weight:700}.padoc code{background:#eef3fb;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px;color:var(--brand)}.padoc .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.padoc .mech{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:0 6px 20px rgba(26,42,74,.05)}.padoc .mech h3{font-size:15.5px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:8px}.padoc .mech h3 .dot{width:9px;height:9px;border-radius:50%;background:var(--brand);flex:none}.padoc .mech ul{margin:6px 0 0 2px;padding-left:18px}.padoc .mech li{font-size:13.5px;color:var(--ink-2);margin:4px 0}.padoc .mech li b{color:var(--ink)}.padoc .pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;margin-right:6px}.padoc .pill.g{background:#e7f7f1;color:var(--accent)}.padoc .pill.o{background:#fdf3e3;color:var(--warn)}.padoc .pill.r{background:#fdeaea;color:var(--danger)}.padoc .publish{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:46px;padding:20px;border:1.5px dashed var(--brand);border-radius:16px;background:linear-gradient(135deg,#eef4ff,#f6f9ff)}.padoc .publish svg{width:22px;height:22px}.padoc .publish span{font-weight:700;color:var(--brand);font-size:15px;letter-spacing:.5px}
+  @media(max-width:640px){.padoc .page{padding:26px 16px 40px}.padoc .title{font-size:23px}.padoc .grid2{grid-template-columns:1fr}.padoc colgroup col:first-child{width:28%}.padoc colgroup col:nth-child(2){width:40%}.padoc colgroup col:last-child{width:32%}}
 </style>
-</head>
-<body>
+<div class="padoc">
 <div class="page">
-
   <div class="badge">
     <svg viewBox="0 0 24 24" fill="none"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3z" fill="#fff" opacity=".95"/><path d="M9 12l2 2 4-4" stroke="#1d5bb8" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
     制度 × 机制 × 审计 · 三层防御
   </div>
-
   <h1 class="title">学生隐私与安全保护设计全解<br>新壹我（591iq）技能</h1>
-
   <div class="meta">
     <span>项目：<b>591iqAutomatic</b></span>
     <span>系统：<b>www.591iq.cn（新壹我 / 天蛙）</b></span>
     <span>设计目标：<b>保护学生个人数据</b></span>
     <span>文档版本：<b>v0.1-beta2</b>（2026-10-06 安全增补）</span>
   </div>
-
   <p class="lede">面对一个会接触 <b>学号、姓名、班级、身份证号、成绩、成长档案</b> 等高度敏感学生数据的技能，本项目把“保护学生隐私”落实成 <b>文档层制度 + 代码层机制 + 智能审计</b> 三道防线，而非一句口号。<br>2026-10-06 增补：在原有三道防线之外，新增 <b>能力边界</b>（对服务端宽于前端的接口做客户端收口）与 <b>可观测留痕</b>（危险操作必留 WARNING 日志）两套机制，并把发现的平台侧越权漏洞按<b>安全工单</b>正式上报。</p>
-
   <!-- 防御总览图 -->
   <div class="fig">
     <svg viewBox="0 0 800 300" role="img" aria-label="三层防御体系图">
@@ -105,29 +46,24 @@
         <linearGradient id="g2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2f7ce0"/><stop offset="1" stop-color="#59a2f5"/></linearGradient>
       </defs>
       <text x="400" y="34" text-anchor="middle" font-size="17" font-weight="800" fill="#17233b">三层防御体系</text>
-
       <!-- layer 3 制度层 -->
       <rect x="40" y="56" width="720" height="64" rx="12" fill="url(#g1)"/>
       <circle cx="82" cy="88" r="18" fill="#fff" opacity=".18"/>
       <path d="M76 88l4 4 7-8" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       <text x="116" y="82" font-size="15" font-weight="800" fill="#fff">第 3 层 · 制度层（文档约定）</text>
       <text x="116" y="104" font-size="12" fill="#dbe7ff">SKILL / AGENTS / MEMORY：规定“什么不许入库、什么不许外传、写前必须确认”</text>
-
       <!-- connector -->
       <path d="M400 120 v18" stroke="#2f7ce0" stroke-width="3" fill="none"/>
       <path d="M393 133 h14 l-7 8 z" fill="#2f7ce0"/>
-
       <!-- layer 2 机制层 -->
       <rect x="40" y="138" width="720" height="64" rx="12" fill="url(#g2)"/>
       <circle cx="82" cy="170" r="18" fill="#fff" opacity=".18"/>
       <rect x="76" y="164" width="12" height="12" rx="2" fill="#fff"/>
       <text x="116" y="164" font-size="15" font-weight="800" fill="#fff">第 2 层 · 机制层（代码实现）</text>
       <text x="116" y="186" font-size="12" fill="#eaf2ff">凭证不落盘 · 网络白名单 · 写操作确认+读回执 · 最小权限 · 用完即焚</text>
-
       <!-- connector -->
       <path d="M400 202 v18" stroke="#2f7ce0" stroke-width="3" fill="none"/>
       <path d="M393 215 h14 l-7 8 z" fill="#2f7ce0"/>
-
       <!-- layer 1 审计层 -->
       <rect x="40" y="220" width="720" height="64" rx="12" fill="#3f5170"/>
       <circle cx="82" cy="252" r="18" fill="#fff" opacity=".16"/>
@@ -137,7 +73,6 @@
     </svg>
     <div class="cap">图 1 · 三层防御体系：制度约束行为 → 机制强制落地 → 审计持续兜底</div>
   </div>
-
   <!-- 1 总体设计 -->
   <section>
     <div class="sec-h"><div class="n">1</div><h2>总体设计原则</h2></div>
@@ -151,7 +86,6 @@
       </div>
     </div>
   </section>
-
   <!-- 2 凭证生命周期 -->
   <section>
     <div class="sec-h"><div class="n">2</div><h2>机制一 · 凭证生命周期</h2><span class="sub">不落盘 · 用完即焚 · 最小权限</span></div>
@@ -169,27 +103,23 @@
             <text x="105" y="112" text-anchor="middle" font-size="11" fill="#3f5170">密码仅作为 -p 参数</text>
           </g>
           <line x1="182" y1="95" x2="222" y2="95" stroke="#1d5bb8" stroke-width="2.5" marker-end="url(#arr)"/>
-
           <g>
             <rect x="228" y="60" width="150" height="70" rx="12" fill="#eef3fb" stroke="#1d5bb8" stroke-width="1.5"/>
             <text x="303" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#1d5bb8">② 进程内 sha1</text>
             <text x="303" y="112" text-anchor="middle" font-size="11" fill="#3f5170">哈希后才出进程</text>
           </g>
           <line x1="380" y1="95" x2="420" y2="95" stroke="#1d5bb8" stroke-width="2.5" marker-end="url(#arr)"/>
-
           <g>
             <rect x="426" y="60" width="170" height="70" rx="12" fill="#e7f7f1" stroke="#0e9f6e" stroke-width="1.5"/>
             <text x="511" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#0e9f6e">③ 只发官方门户</text>
             <text x="511" y="112" text-anchor="middle" font-size="11" fill="#3f5170">xmyz.xmedu.cn</text>
           </g>
           <line x1="598" y1="95" x2="640" y2="95" stroke="#1d5bb8" stroke-width="2.5" marker-end="url(#arr)"/>
-
           <g>
             <rect x="644" y="60" width="128" height="70" rx="12" fill="#fdeaea" stroke="#dc2626" stroke-width="1.5"/>
             <text x="708" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#dc2626">④ 用完即焚</text>
             <text x="708" y="112" text-anchor="middle" font-size="11" fill="#3f5170">会话/验证码图删除</text>
           </g>
-
           <!-- no-disk banner -->
           <rect x="150" y="150" width="500" height="26" rx="13" fill="#fff3f3" stroke="#dc2626" stroke-width="1" stroke-dasharray="5 4"/>
           <text x="400" y="168" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">全程不写盘：无 .env / 无日志 / 无缓存残留</text>
@@ -202,7 +132,6 @@
       </div>
     </div>
   </section>
-
   <!-- 3 网络白名单 -->
   <section>
     <div class="sec-h"><div class="n">3</div><h2>机制二 · 网络白名单</h2><span class="sub">数据不出官方域</span></div>
@@ -242,7 +171,6 @@
       </div>
     </div>
   </section>
-
   <!-- 4 写操作护栏 -->
   <section>
     <div class="sec-h"><div class="n">4</div><h2>机制三 · 写操作双重护栏</h2><span class="sub">确认 + 读回执</span></div>
@@ -293,7 +221,6 @@
       </div>
     </div>
   </section>
-
   <!-- 5 自动审计闸门 -->
   <section>
     <div class="sec-h"><div class="n">5</div><h2>机制四 · 智能审计闸门</h2><span class="sub">TestContract 离线自检</span></div>
@@ -308,7 +235,6 @@
             <rect x="40" y="104" width="352" height="34" rx="8" fill="#e7f7f1"/><circle cx="58" cy="121" r="7" fill="#0e9f6e"/><path d="M55 121l2.2 2.2 3.8-4.4" stroke="#fff" stroke-width="1.6" fill="none"/><text x="74" y="125">reference/ 体积预算 ≤ 100 KB</text>
             <rect x="40" y="146" width="352" height="34" rx="8" fill="#e7f7f1"/><circle cx="58" cy="163" r="7" fill="#0e9f6e"/><path d="M55 163l2.2 2.2 3.8-4.4" stroke="#fff" stroke-width="1.6" fill="none"/><text x="74" y="167">模块可导入 · 无副作用</text>
             <rect x="40" y="188" width="352" height="34" rx="8" fill="#e7f7f1"/><circle cx="58" cy="205" r="7" fill="#0e9f6e"/><path d="M55 205l2.2 2.2 3.8-4.4" stroke="#fff" stroke-width="1.6" fill="none"/><text x="74" y="209">CLI --help 冒烟 · 包结构合规</text>
-
             <rect x="410" y="20" width="352" height="34" rx="8" fill="#e7f7f1"/><circle cx="428" cy="37" r="7" fill="#0e9f6e"/><path d="M425 37l2.2 2.2 3.8-4.4" stroke="#fff" stroke-width="1.6" fill="none"/><text x="444" y="41">无 BOM / 无 TAB / 无乱码</text>
             <rect x="410" y="62" width="352" height="34" rx="8" fill="#e7f7f1"/><circle cx="428" cy="79" r="7" fill="#0e9f6e"/><path d="M425 79l2.2 2.2 3.8-4.4" stroke="#fff" stroke-width="1.6" fill="none"/><text x="444" y="83">RECORD_TYPE_MAP 与文档一致</text>
             <rect x="410" y="104" width="352" height="34" rx="8" fill="#e7f7f1"/><circle cx="428" cy="121" r="7" fill="#0e9f6e"/><path d="M425 121l2.2 2.2 3.8-4.4" stroke="#fff" stroke-width="1.6" fill="none"/><text x="444" y="125">VERSION 格式与发布规范</text>
@@ -325,7 +251,6 @@
       </div>
     </div>
   </section>
-
   <!-- 6 导出边界 -->
   <section>
     <div class="sec-h"><div class="n">6</div><h2>机制五 · 数据导出边界与脱敏</h2><span class="sub">只读 · 精选 · 隔离</span></div>
@@ -336,7 +261,6 @@
       </div>
     </div>
   </section>
-
   <!-- 7 新增 机制六：能力边界 -->
   <section>
     <div class="sec-h"><div class="n">7</div><h2>机制六 · 能力边界</h2><span class="sub">高敏能力默认关闭 / 不留后门</span></div>
@@ -373,7 +297,6 @@
       <p style="margin-top:12px;font-size:13.5px;color:#3f5170"><b>诚实说明：</b>这两道客户端闸门<b>只防误用、不是安全控制</b>。绕过本工具直接发 HTTP 请求，依然能拿到全量数据——因为宽松的是服务端。真正的修复必须在平台侧，故已按安全工单上报（见机制七）。</p>
     </div>
   </section>
-
   <!-- 8 新增 机制七：可观测与上报 -->
   <section>
     <div class="sec-h"><div class="n">8</div><h2>机制七 · 可观测与安全上报</h2><span class="sub">留痕 · 自证 · 善意披露</span></div>
@@ -404,7 +327,6 @@
       <p style="margin-top:12px;font-size:13.5px;color:#3f5170"><b>披露原则：</b>只披露最小必要信息——<b>端点路径与调用载荷不写入公开文档与发布包</b>，漏洞细节单独存放且不随包分发；工单正文只写现象、复现、影响与修复建议，字段仅列<b>名称</b>不列<b>值</b>。</p>
     </div>
   </section>
-
   <!-- 7 文档层制度 -->
   <section>
     <div class="sec-h"><div class="n">9</div><h2>文档层制度</h2><span class="sub">把安全写进规范</span></div>
@@ -421,7 +343,6 @@
       </table>
     </div>
   </section>
-
   <!-- 8 代码层实现对照 -->
   <section>
     <div class="sec-h"><div class="n">10</div><h2>代码层实现对照</h2><span class="sub">机制即代码</span></div>
@@ -443,7 +364,6 @@
       </table>
     </div>
   </section>
-
   <!-- 9 已知缺口 -->
   <section>
     <div class="sec-h"><div class="n">11</div><h2>已知缺口（如实标注）</h2><span class="sub">透明是安全的一部分</span></div>
@@ -467,7 +387,6 @@
       </table>
     </div>
   </section>
-
   <!-- 10 结论 -->
   <section>
     <div class="sec-h"><div class="n">12</div><h2>设计结论</h2></div>
@@ -476,12 +395,9 @@
       <p style="margin-top:10px"><b>当前最大短板不再是工具，而是平台侧：</b><b>D14 / D19 两项角色校验缺失尚未修复</b>，工具侧的客户端闸门只防误用、不是安全控制。这也是本项目“如实标注缺口”这一安全态度的体现——能修的立刻修（搜索接口未脱敏已于 2026-10-06 修复并默认脱敏），不能修的写清楚、报上去、等回复。</p>
     </div>
   </section>
-
   <div class="publish">
     <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v3M5.6 5.6l2.1 2.1M3 12h3M18 12h3M16.3 7.7l2.1-2.1" stroke="#1d5bb8" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="15" r="5" fill="#1d5bb8"/><path d="M10.2 14.6l1.3 1.3 2.3-2.6" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span>发布 · 新壹我（591iq）综合素质评价系统</span>
   </div>
-
 </div>
-</body>
-</html>
+</div>
