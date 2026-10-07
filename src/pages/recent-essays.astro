@@ -1,0 +1,296 @@
+---
+import { getCollection } from 'astro:content';
+
+// 这个页面是给首页随笔区用 iframe 嵌入的：
+// 独立成页 → 随笔区的渲染/交互逻辑（列表、预览卡联动、样式）不污染首页那份静态 index.html，
+// 首页只需一个 <iframe>。所以这里自带一套 CSS 变量，不依赖宿主页面的 :root。
+const posts = (await getCollection('blog'))
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 5);
+
+// 首页按本地时区格式化，避免 toISOString 的 UTC 偏移导致日期差一天
+const fmtDate = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const first = posts[0];
+---
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>近期随笔</title>
+<style>
+    :root {
+        --primary: #3c80f0;
+        --primary-2: #5a9bff;
+        --text: #1a2332;
+        --text-3: #888;
+        --font: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+        --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { background: transparent; }
+    body {
+        font-family: var(--font);
+        color: var(--text);
+        padding: 4px;
+        overflow-x: hidden;
+    }
+
+    /* —— 布局 —— */
+    .news-layout {
+        display: flex;
+        gap: 32px;
+        align-items: stretch;
+        min-height: 420px;
+    }
+    .news-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+        width: 50%;
+    }
+    .news-preview {
+        position: relative;
+        min-height: 380px;
+        flex: 1;
+        width: 50%;
+    }
+
+    /* —— 列表项 —— */
+    .news-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 10px 16px;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: background 0.35s ease, height 0.35s ease;
+        position: relative;
+        overflow: hidden;
+        height: 68px;
+        contain: layout style paint;
+        text-decoration: none;
+        color: inherit;
+    }
+    .news-item::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: transparent;
+        border-radius: 14px;
+        transition: background 0.35s ease;
+    }
+    .news-item:hover { height: 68px; }
+    .news-item:hover::before { background: rgba(255, 255, 255, 0.55); }
+    .news-item:hover .news-item-arrow { opacity: 1; transform: translateX(0); }
+    .news-item:hover .news-item-index { width: 36px; height: 36px; font-size: 14px; }
+    .news-item:hover .news-item-title { font-size: 15px; white-space: normal; }
+    .news-item:hover .news-item-date { opacity: 1; }
+
+    .news-item.active { height: 128px; }
+    .news-item.active::before {
+        background: linear-gradient(348deg, #c3d4ed00, #c0d5ff85);
+        box-shadow: 0 4px 20px rgba(31, 38, 135, 0.08), 0 0 0 1px rgba(60, 128, 240, 0.12);
+    }
+    .news-item.active .news-item-index {
+        width: 42px; height: 42px; font-size: 14px;
+        background: linear-gradient(135deg, #3c80f0, #5a9bff);
+        color: #fff;
+    }
+    .news-item.active .news-item-title {
+        font-size: 18px !important;
+        font-weight: 600;
+        color: #3c80f0;
+        white-space: normal;
+    }
+    .news-item.active .news-item-arrow { opacity: 1; transform: translateX(0); color: #3c80f0; }
+
+    .news-item-index {
+        width: 28px; height: 28px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px; font-weight: 700;
+        color: #8a96a6;
+        background: rgba(138, 150, 166, 0.08);
+        border-radius: 8px;
+        flex-shrink: 0;
+        transition: background 0.35s ease, color 0.35s ease;
+        position: relative;
+        z-index: 1;
+    }
+    .news-item-content { flex: 1; min-width: 0; position: relative; z-index: 1; }
+    .news-item-title {
+        font-size: 13px; font-weight: 500; line-height: 1.5;
+        color: #2c3e50;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        margin-bottom: 2px;
+        transition: font-size 0.35s;
+    }
+    .news-item-date { font-size: 11px; color: #8a96a6; opacity: 1; transition: opacity 0.3s ease; }
+    .news-item-arrow {
+        font-size: 18px; color: #8a96a6;
+        opacity: 0; transform: translateX(-6px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        position: relative; z-index: 1;
+    }
+
+    /* —— 预览卡 —— */
+    .news-preview-card {
+        cursor: pointer;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.08);
+        height: 100%;
+        display: flex; flex-direction: column;
+        contain: layout style paint;
+        text-decoration: none;
+        color: inherit;
+    }
+    .news-preview-cover {
+        width: 100%; height: 290px;
+        overflow: hidden;
+        background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 50%, #e0f2fe 100%);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .news-preview-cover .cover-placeholder { text-align: center; padding: 24px; color: var(--primary); }
+    .news-preview-cover .cover-placeholder i { font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.7; }
+    .news-preview-cover .cover-placeholder span { font-size: 18px; font-weight: 600; letter-spacing: 2px; }
+    .news-preview-info {
+        padding: 20px 24px 24px; flex: 1;
+        display: flex; flex-direction: column; justify-content: center;
+    }
+    .news-preview-title { text-align: center; font-size: 17px; font-weight: 600; line-height: 1.6; color: var(--text); }
+    .news-preview-date {
+        display: inline-block; text-align: center;
+        font-size: 12px; color: var(--text-3);
+        margin-top: 10px; letter-spacing: 0.3px;
+    }
+    .news-preview-summary {
+        font-size: 14px; color: #6b7a8d; line-height: 1.8;
+        margin-top: 14px;
+        display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;
+        overflow: hidden; text-align: justify;
+    }
+    .preview-fading {
+        opacity: 0; transform: translateX(16px);
+        transition: opacity 0.35s var(--ease), transform 0.35s var(--ease);
+    }
+    .preview-shown {
+        opacity: 1; transform: translateX(0);
+        transition: opacity 0.35s var(--ease), transform 0.35s var(--ease);
+    }
+    .news-more {
+        display: block; text-align: center;
+        margin-top: 28px;
+        font-size: 14px; color: rgba(255, 255, 255, 0.85);
+        text-decoration: none;
+        text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+        transition: color 0.25s;
+    }
+    .news-more:hover { color: #7eb6ff; }
+
+    @media (max-width: 768px) {
+        .news-layout { flex-direction: column; }
+        .news-preview { min-height: 320px; width: 100%; }
+        .news-list { width: 100%; }
+    }
+</style>
+</head>
+<body>
+
+<div class="news-layout">
+    <div class="news-list" id="newsList">
+        {posts.map((post, i) => (
+            <a
+                class:list={['news-item', { active: i === 0 }]}
+                data-index={i}
+                href={`/blog/${post.id}/`}
+                target="_blank"
+                rel="noopener"
+            >
+                <span class="news-item-index">{String(i + 1).padStart(2, '0')}</span>
+                <div class="news-item-content">
+                    <h3 class="news-item-title">{post.data.title}</h3>
+                    <span class="news-item-date">{fmtDate(post.data.pubDate)}</span>
+                </div>
+                <span class="news-item-arrow">›</span>
+            </a>
+        ))}
+        {posts.length === 0 && (
+            <div class="news-item">
+                <span class="news-item-index">--</span>
+                <div class="news-item-content">
+                    <h3 class="news-item-title">还没有文章</h3>
+                </div>
+            </div>
+        )}
+    </div>
+    <div class="news-preview">
+        {first && (
+            <a class="news-preview-card preview-shown" id="newsPreview" href={`/blog/${first.id}/`} target="_blank" rel="noopener">
+                <div class="news-preview-cover">
+                    <div class="cover-placeholder">
+                        <span aria-hidden="true">📝</span>
+                        <span>{first.data.previewText ?? first.data.title}</span>
+                    </div>
+                </div>
+                <div class="news-preview-info">
+                    <h3 class="news-preview-title">{first.data.previewText ?? first.data.title}</h3>
+                    <span class="news-preview-date">{fmtDate(first.data.pubDate)}</span>
+                    <p class="news-preview-summary">{first.data.description ?? ''}</p>
+                </div>
+            </a>
+        )}
+    </div>
+</div>
+
+<a class="news-more" href="/blog/" target="_blank" rel="noopener">查看全部文章 →</a>
+
+<script>
+    // 点击/键盘激活某一条 → 右侧预览卡淡出淡入切换（与首页原行为一致）
+    var newsItems = document.querySelectorAll('#newsList .news-item');
+    var preview = document.getElementById('newsPreview');
+
+    newsItems.forEach(function (item) {
+        function activate() {
+            if (item.classList.contains('active') || !preview) return;
+            newsItems.forEach(function (x) { x.classList.remove('active'); });
+            item.classList.add('active');
+
+            var title = item.querySelector('.news-item-title');
+            var date = item.querySelector('.news-item-date');
+            preview.classList.remove('preview-shown');
+            preview.classList.add('preview-fading');
+            setTimeout(function () {
+                var t = preview.querySelector('.news-preview-title');
+                var d = preview.querySelector('.news-preview-date');
+                var cover = preview.querySelector('.cover-placeholder span:last-child');
+                var href = item.getAttribute('href');
+                if (t && title) t.textContent = title.textContent;
+                if (d && date) d.textContent = date.textContent;
+                if (cover && title) cover.textContent = title.textContent;
+                if (href) preview.setAttribute('href', href);
+                preview.classList.remove('preview-fading');
+                preview.classList.add('preview-shown');
+            }, 350);
+        }
+
+        item.addEventListener('click', function (e) {
+            // 已激活的条目照常跳文章；未激活的先切预览，不跳转
+            if (!item.classList.contains('active')) { e.preventDefault(); }
+            activate();
+        });
+        item.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+        });
+    });
+</script>
+
+</body>
+</html>

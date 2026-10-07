@@ -10,6 +10,8 @@ console.log('\n[0] 样式作用域健全性');
 // 组件自身模板里的元素。若样式写在只含 <slot/> 的布局里，HTML 上一个 cid 都没有，
 // 整份样式表静默失效（主页会退化成未样式化的原始 HTML）。
 // 判据：CSS 里出现 cid 作用域，而产物 HTML 里没有 —— 必然是这种错误。
+// 注意：主页 dist/index.html 现在是 public/ 里的静态页（无 cid），所以 cid 判据
+// 要落到 Astro 生成的页面上（取随笔 iframe 页 /recent-essays/）。
 {
   const cssFiles = readdirSync(`${D}/_astro`).filter((f) => f.endsWith('.css'));
   let scopedHits = 0;
@@ -17,18 +19,28 @@ console.log('\n[0] 样式作用域健全性');
     const c = readFileSync(`${D}/_astro/${f}`, 'utf8');
     scopedHits += (c.match(/data-astro-cid-/g) || []).length;
   }
-  const htmlCid =
-    (readFileSync(`${D}/index.html`, 'utf8').match(/data-astro-cid-/g) || []).length;
+  const htmlCid = ['/recent-essays/', '/blog/']
+    .map((r) => readFileSync(`${D}${r}index.html`, 'utf8'))
+    .reduce((n, h) => n + (h.match(/data-astro-cid-/g) || []).length, 0);
   ok(scopedHits === 0 || htmlCid > 0,
-    `CSS cid ${scopedHits} 处 / HTML cid ${htmlCid} 处（两者不应单边为 0）`);
+    `CSS cid ${scopedHits} 处 / Astro 页 cid ${htmlCid} 处（两者不应单边为 0）`);
 
-  // 抽查主页关键选择器未被 scope 化
-  const mainCss = cssFiles
-    .map((f) => readFileSync(`${D}/_astro/${f}`, 'utf8'))
-    .find((c) => c.includes('.glass-card')) ?? '';
-  for (const sel of ['.glass-card', '.indicator', '.news-item', '.top-bar', ':root']) {
-    const scoped = new RegExp(sel.replace('.', '\\.') + '\\[data-astro-cid-').test(mainCss);
-    ok(!scoped, `${sel} 未被 scope 化`);
+  // 随笔 iframe 页的样式由它自己的模板产出，Astro 会给选择器打 cid，
+  // 同时页面元素也带同一个 cid —— 这才是「样式真的生效」的形态。
+  // 反过来才是故障：CSS 里有 cid，而页面元素一个 cid 都没有（样式静默失效）。
+  {
+    const page = readFileSync(`${D}/recent-essays/index.html`, 'utf8');
+    const css = cssFiles.map((f) => readFileSync(`${D}/_astro/${f}`, 'utf8')).join('\n');
+    const cssCids = new Set([...css.matchAll(/data-astro-cid-([a-z0-9]+)/g)].map((m) => m[1]));
+    const pageCids = new Set([...page.matchAll(/data-astro-cid-([a-z0-9]+)/g)].map((m) => m[1]));
+    const orphan = [...cssCids].filter((c) => !pageCids.has(c));
+    ok(orphan.length === 0,
+      `随笔页 CSS 里的 cid 都能在 HTML 找到对应元素（孤立 ${orphan.length} 个）`);
+    for (const sel of ['.news-item', '.news-preview-card', '.news-layout']) {
+      ok(new RegExp(sel.replace('.', '\\.') + '[^{}]*\\{').test(css) || page.includes(sel),
+        `${sel} 有样式规则`);
+    }
+    ok(!/class="news-iframe"/.test(page), '随笔页自身不含 iframe（避免嵌套）');
   }
 }
 
@@ -56,19 +68,34 @@ console.log('\n[0] 字体完整性');
   }
 }
 
-console.log('\n[1] 主页：最新 5 篇文章');
+console.log('\n[1] 主页随笔区：iframe 嵌入 + 最新 5 篇');
+// 主页 dist/index.html 是还原的静态页，随笔区只是个 <iframe>，
+// 所以 5 条列表数据在 /recent-essays/ 那一侧。两边都要查。
 const home = readFileSync(`${D}/index.html`, 'utf8');
-const re = /data-index="(\d+)"\s+href="([^"]+)"[\s\S]*?news-item-title">([^<]+)</g;
-const items = [...home.matchAll(re)].map((m) => ({ i: m[1], href: m[2], title: m[3] }));
+{
+  const iframe = home.match(/<iframe[^>]*class="news-iframe"[^>]*>/)?.[0]
+    ?? home.match(/<iframe[^>]*src="\/recent-essays\/"[^>]*>/)?.[0] ?? '';
+  ok(!!iframe, '主页存在随笔区 iframe');
+  ok(/src="\/recent-essays\/"/.test(iframe), 'iframe 指向 /recent-essays/');
+  ok(!home.includes('id="newsList"'), '主页不再自带硬编码随笔列表（已下沉到 iframe 页）');
+  ok(existsSync(`${D}/recent-essays/index.html`), 'iframe 目标页面已生成');
+}
+const essays = readFileSync(`${D}/recent-essays/index.html`, 'utf8');
+// Astro 会在标签里插入 data-astro-cid-* 属性，且 class:list 生成的 class 在 data-index 之前，
+// 所以匹配要容忍这些属性插入。
+const re = /<a[^>]*class="news-item[^"]*"[^>]*data-index="(\d+)"[^>]*href="([^"]+)"[^>]*>[\s\S]*?news-item-title"[^>]*>([^<]+)</g;
+const items = [...essays.matchAll(re)].map((m) => ({ i: m[1], href: m[2], title: m[3] }));
 items.forEach((it) => console.log(`      ${it.i}  ${it.title}  ->  ${it.href}`));
 ok(items.length === 5, `恰好 5 条（实际 ${items.length}）`);
 ok(items.every((_, k) => Number(items[k].i) === k), '序号 0-4 连续');
-ok(!home.includes('draft-test'), '草稿未出现在主页');
-ok(home.includes('/blog/'), '条目为可点击链接（带 /blog/ 路径）');
-ok(home.includes('news-more'), '含「查看全部文章」入口');
+ok(!essays.includes('draft-test'), '草稿未出现在随笔列表');
+ok(essays.includes('/blog/'), '条目为可点击链接（带 /blog/ 路径）');
+ok(essays.includes('news-more'), '含「查看全部文章」入口');
+// iframe 内的链接必须能跳出 iframe：新窗口打开，不能把父页面带走
+ok(/<a[^>]*class="news-item[^"]*"[^>]*target="_blank"/.test(essays), '条目 target="_blank"（不劫持父页面）');
 
 console.log('\n[2] 排序：日期倒序');
-const dates = [...home.matchAll(/news-item-date">([\d-]+)</g)].map((m) => m[1]);
+const dates = [...essays.matchAll(/news-item-date"[^>]*>([\d-]+)</g)].map((m) => m[1]);
 console.log('     ', dates.join('  '));
 ok(
   dates.every((d, k) => k === 0 || dates[k - 1] >= d),
