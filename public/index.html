@@ -1,4 +1,4 @@
-﻿﻿<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -158,7 +158,7 @@
         }
 
         .menu {
-            height: 120px;
+            height: 80px;
             margin-right: 24px;
             font-size: 0;
             flex: 0 1 auto;
@@ -166,7 +166,7 @@
 
         .menu ul {
             list-style: none;
-            height: 120px;
+            height: 80px;
             display: flex;
             align-items: stretch;
         }
@@ -174,12 +174,12 @@
         .menu ul li {
             position: relative;
             display: inline-block;
-            height: 120px;
+            height: 80px;
             padding: 0 14px;
             font-size: 22px;
             font-weight: 700;
             color: var(--text);
-            line-height: 120px;
+            line-height: 80px;
             cursor: pointer;
             transition: color 0.5s;
             white-space: nowrap;
@@ -869,14 +869,20 @@
             min-height: 420px;
         }
 
-        /* 近期随笔以 iframe 嵌入：整块由 /recent-essays/ 自己排版 */
+        /* 近期随笔以 iframe 嵌入：整块由 /recent-essays/ 自己排版。
+           高度不写死 —— 由 iframe 内页把自身高度 postMessage 过来（见文末脚本），
+           min-height 只作为脚本未就绪时的占位，避免内部出现滚动条。 */
         .news-iframe {
             display: block;
-            flex: 1;
+            /* 必须 flex: none —— 父级 .news-layout 是 flex 容器，
+               默认 flex-basis:0 会让 flex 布局重新分配主轴尺寸，
+               覆盖掉 JS 写入的 height（移动端纵向排列时实测被压回 min-height）。 */
+            flex: none;
             width: 100%;
-            height: 420px;
+            min-height: 420px;
             border: 0;
             background: transparent;
+            transition: height 0.2s ease;
         }
 
         .news-list {
@@ -1439,7 +1445,9 @@
             .section-title-wrap { gap: 12px; margin-bottom: 20px; }
             .title-serif { width: 28px; }
             .news-layout { flex-direction: column; }
-            .news-iframe { height: auto; min-height: 720px; }
+            /* 移动端纵向排列时高度差很多，交给脚本自适应；
+               这里只给一个下限，别写 height:auto —— 那会让 iframe 塌成默认 150px。 */
+            .news-iframe { min-height: 720px; }
             .news-preview { min-height: 320px; width: 100%; }
             .news-list { width: 100%; }
             .intro-panel { flex-direction: column; gap: 20px; text-align: center; padding-top: 100px; padding-bottom: 60px; }
@@ -1764,7 +1772,39 @@
                         loading="lazy"
                         referrerpolicy="no-referrer"
                     ></iframe>
-                </div></section>
+                </div>
+                <script>
+                    /* 随笔 iframe 高度自适应：内页把自身文档高度 postMessage 过来，
+                       这里按内容定高，iframe 内就不会出现纵向滚动条。
+                       收不到消息时（file:// 直接打开、脚本被拦）回退到 min-height。 */
+                    (function () {
+                        var frame = document.querySelector('iframe.news-iframe');
+                        if (!frame) return;
+
+                        function apply(h) {
+                            if (typeof h !== 'number' || !isFinite(h) || h <= 0) return;
+                            frame.style.height = Math.ceil(h) + 'px';
+                            frame.dataset.autoHeight = '1';
+                        }
+
+                        window.addEventListener('message', function (e) {
+                            var d = e.data;
+                            if (!d || d.type !== 'essay-frame-height') return;
+                            // 只接受本窗内嵌的 iframe 上报
+                            if (e.source !== frame.contentWindow) return;
+                            apply(d.height);
+                        });
+
+                        // 内页可能先于监听器就绪，握手一次把高度要过来
+                        function handshake() {
+                            try { frame.contentWindow.postMessage({ type: 'essay-frame-request' }, '*'); } catch (err) {}
+                        }
+                        frame.addEventListener('load', handshake);
+                        if (document.readyState === 'complete') setTimeout(handshake, 0);
+                    })();
+                </script>
+            </div>
+        </section>
 
         <!-- MXHA -->
         <section class="mxha-section reveal">

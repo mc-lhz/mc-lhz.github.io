@@ -278,6 +278,7 @@ const first = posts[0];
                 if (href) preview.setAttribute('href', href);
                 preview.classList.remove('preview-fading');
                 preview.classList.add('preview-shown');
+                reportHeight(); // 切换后行高变化，高度要重新报
             }, 350);
         }
 
@@ -290,6 +291,33 @@ const first = posts[0];
             if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
         });
     });
+
+    /* —— 高度上报：让父页把 iframe 定到内容高度，避免内部出现滚动条 —— */
+    function reportHeight() {
+        var h = Math.max(
+            document.documentElement.scrollHeight,
+            document.body.scrollHeight,
+            document.documentElement.offsetHeight
+        );
+        // 去掉 body 的 padding 残留（这里 body padding: 4px，已含在 scrollHeight 里）
+        try {
+            parent.postMessage({ type: 'essay-frame-height', height: h }, '*');
+        } catch (e) { /* file:// 或跨域时忽略 */ }
+    }
+
+    window.addEventListener('load', reportHeight);
+    window.addEventListener('resize', reportHeight);
+    // 父页监听器可能比本页脚本注册得晚，收到请求就补报一次
+    window.addEventListener('message', function (e) {
+        if (e.data && e.data.type === 'essay-frame-request') reportHeight();
+    });
+    if (window.ResizeObserver) {
+        new ResizeObserver(reportHeight).observe(document.body);
+    }
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(reportHeight);
+    }
+    reportHeight();
 </script>
 
 </body>

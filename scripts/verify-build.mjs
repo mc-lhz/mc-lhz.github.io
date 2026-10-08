@@ -94,6 +94,32 @@ ok(essays.includes('news-more'), '含「查看全部文章」入口');
 // iframe 内的链接必须能跳出 iframe：新窗口打开，不能把父页面带走
 ok(/<a[^>]*class="news-item[^"]*"[^>]*target="_blank"/.test(essays), '条目 target="_blank"（不劫持父页面）');
 
+// 高度自适应：内页上报、 父页接收，两边都得有，否则 iframe 内会出现滚动条
+ok(essays.includes('essay-frame-height'), '随笔页上报自身高度');
+ok(essays.includes('ResizeObserver'), '随笔页监听内容尺寸变化');
+ok(home.includes("d.type !== 'essay-frame-height'") && home.includes('frame.style.height'),
+  '主页接收高度并写入 iframe');
+ok(/min-height:\s*420px/.test(home) && !/\.news-iframe\s*\{[^}]*[^-]height:\s*\d+px/.test(home),
+  'iframe 只用 min-height 占位，不写死固定高度');
+ok(!/\.news-iframe\s*\{[^}]*height:\s*auto/.test(home),
+  '移动端未把 iframe 写成 height:auto（会塌成 150px）');
+
+// 顶部薄纱必须从视口顶 y=0 起。
+// 这里曾经有段 24px 的无来源空白把 banner 整体下推，导致视口顶部 0~24px 是裸的
+// 3D 背景、没有薄纱材质。根因是 .menu / .menu ul / .menu ul li 三处写死
+// height/line-height:120px，而顶栏 .g-wrap 只有 80px —— 菜单溢出到视口外。
+// 这里锁死桌面端菜单高度与顶栏一致（移动端 media query 覆盖成 40px 是对的，跳过）。
+{
+  const desktopCss = home.split(/@media[^{]*\{/)[0]; // 只取第一个 media 之前 = 桌面规则
+  const menuHeights = [...desktopCss.matchAll(/\.menu(?: ul)?(?: ul li)?\s*\{([^}]*)\}/g)]
+    .map((m) => m[1])
+    .filter((d) => /(^|[^-])height:\s*\d+px/.test(d))
+    .map((d) => (/[^-]height:\s*(\d+)px/.exec(d) || [])[1])
+    .filter(Boolean);
+  ok(menuHeights.length > 0 && menuHeights.every((h) => h === '80'),
+    `桌面端菜单高度与顶栏一致（实际 ${menuHeights.join('/') || '未找到'}，应为 80）`);
+}
+
 console.log('\n[2] 排序：日期倒序');
 const dates = [...essays.matchAll(/news-item-date"[^>]*>([\d-]+)</g)].map((m) => m[1]);
 console.log('     ', dates.join('  '));
