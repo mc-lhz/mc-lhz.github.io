@@ -79,6 +79,11 @@ const home = readFileSync(`${D}/index.html`, 'utf8');
   ok(/src="\/recent-essays\/"/.test(iframe), 'iframe 指向 /recent-essays/');
   ok(!home.includes('id="newsList"'), '主页不再自带硬编码随笔列表（已下沉到 iframe 页）');
   ok(existsSync(`${D}/recent-essays/index.html`), 'iframe 目标页面已生成');
+  // 曾经栽在这里：loading="lazy" 的触发距离各引擎不同，
+  // Chromium 首屏就加载，Firefox/WebKit 要滚动到附近才请求 ——
+  // 于是 Safari/Firefox 手机上首屏的随笔区是空白占位框。禁止再加回来。
+  const iframeTag = home.match(/<iframe[^>]*class="news-iframe"[^>]*>/)?.[0] ?? '';
+  ok(!/loading\s*=\s*"lazy"/.test(iframeTag), '随笔 iframe 未加 loading="lazy"（Firefox/Safari 会拖到滚动才加载）');
 }
 const essays = readFileSync(`${D}/recent-essays/index.html`, 'utf8');
 // Astro 会在标签里插入 data-astro-cid-* 属性，且 class:list 生成的 class 在 data-index 之前，

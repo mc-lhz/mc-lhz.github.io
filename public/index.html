@@ -1765,11 +1765,15 @@
                 <div class="news-layout">
                     <!-- 近期随笔：由 Astro 构建的 recent-essays 页面以 iframe 嵌入，
                          渲染与交互逻辑（列表/预览联动）都在那一侧维护，本页只负责壳。 -->
+                    <!-- 不加 loading="lazy"：各引擎的懒加载触发距离不同，
+                         Chromium 首屏就会加载，而 Firefox / WebKit(Safari) 要滚动到
+                         附近才请求 —— 实测移动端首屏只请求 background3D，随笔区
+                         长时间是一个 720px 的空白占位框。这页只有 ~5.6KB，eager
+                         加载成本可忽略，换三引擎行为一致。 -->
                     <iframe
                         class="news-iframe"
                         src="/recent-essays/"
                         title="近期随笔"
-                        loading="lazy"
                         referrerpolicy="no-referrer"
                     ></iframe>
                 </div>
