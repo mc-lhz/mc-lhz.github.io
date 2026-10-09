@@ -17,6 +17,9 @@ const blog = defineCollection({
     template: z.string().optional(),
     // 可选：主页右侧预览卡显示的文字，默认取 title
     previewText: z.string().optional(),
+    // 可选：头图。站内路径（/images/x.jpg）或外链 URL（须 https，http 会被按混合内容拦掉）。
+    // 不写就不显示 —— 预览卡退回占位符，列表页不出现缩略图空位。
+    cover: z.string().optional(),
   }),
 });
 

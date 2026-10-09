@@ -125,6 +125,64 @@ ok(!/\.news-iframe\s*\{[^}]*height:\s*auto/.test(home),
     `桌面端菜单高度与顶栏一致（实际 ${menuHeights.join('/') || '未找到'}，应为 80）`);
 }
 
+console.log('\n[1b] 文章头图 cover');
+{
+  // 从 frontmatter 找出哪些文章带头图，别写死文件名（文章随时会被删/改名）
+  const blogDir = 'src/content/blog';
+  const files = readdirSync(blogDir).filter((f) => f.endsWith('.md') && !f.startsWith('_'));
+  const isDraft = (f) => /^draft:\s*true/m.test(readFileSync(`${blogDir}/${f}`, 'utf8'));
+  const getCover = (f) => (/^cover:\s*(.+)$/m.exec(readFileSync(`${blogDir}/${f}`, 'utf8')) || [])[1];
+  const live = files.filter((f) => !isDraft(f));
+  const withCover = live.filter((f) => getCover(f));
+  const withoutCover = live.filter((f) => !getCover(f));
+  console.log('      有 cover:', withCover.join(', ') || '(无)');
+
+  ok(withCover.length > 0, '存在带头图的文章用于验证');
+  ok(withoutCover.length > 0, '存在不带 cover 的文章（验证「未指定就不显示」）');
+
+  // 外链必须是 https：站点是 https，http 会被浏览器按混合内容拦掉
+  const badScheme = withCover.filter((f) => /^cover:\s*http:\/\//.test(
+    readFileSync(`${blogDir}/${f}`, 'utf8')));
+  ok(badScheme.length === 0, `外链头图均为 https（http 会成混合内容被拦）：${badScheme.join(', ') || 'OK'}`);
+
+  // 随笔 iframe 侧：有条目带 data-cover、有 <img id="newsCover">、有 object-fit 规则
+  // 注意 Astro 构建产物形态：CSS 会被抽到 _astro/*.css，脚本被压缩改名，
+  // 空字符串属性渲染成无值属性（data-cover 而不是 data-cover=""），
+  // 所以下面的正则都要容忍这些形态。
+  const allCss = readdirSync(`${D}/_astro`).filter((f) => f.endsWith('.css'))
+    .map((f) => readFileSync(`${D}/_astro/${f}`, 'utf8')).join('\n');
+  const coverAttrs = [...essays.matchAll(/data-cover(?:="([^"]*)")?/g)].map((m) => m[1] ?? '');
+  ok(coverAttrs.length >= 5, `每个列表项都输出 data-cover（实际 ${coverAttrs.length}）`);
+  ok(coverAttrs.some((c) => c), '有条目带头图地址');
+  ok(coverAttrs.some((c) => !c), '有条目 data-cover 为空（未指定的照旧不显示）');
+  ok(/id="newsCover"/.test(essays), '预览卡渲染了 <img id="newsCover">');
+  ok(/\.news-preview-cover[^{}]*img[^{]*\{[^}]*object-fit:\s*cover/.test(allCss),
+    '头图用 object-fit: cover（高度固定，不影响 iframe 高度上报）');
+  ok(/<img[^>]*id="newsCover"[^>]*referrerpolicy="no-referrer"/.test(essays)
+     || /referrerpolicy="no-referrer"[^>]*id="newsCover"/.test(essays),
+    '头图 <img> 带 referrerpolicy="no-referrer"');
+  ok(/addEventListener\(\s*["'`]error["'`]/.test(essays),
+    '外链图加载失败时退回占位符（img error 监听）');
+  ok(/referrerPolicy\s*=\s*[`'"]no-referrer/.test(essays),
+    '预热请求同样不带 referrer');
+
+  // /blog/ 列表侧：有 cover 的卡片带缩略图，没有的不带（不留空位）
+  const blogList = readFileSync(`${D}/blog/index.html`, 'utf8');
+  const blogInlineCss = [...blogList.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join('\n');
+  const cards = [...blogList.matchAll(/<a[^>]*class="post-card[^"]*"[\s\S]*?<\/a>/g)].map((m) => m[0]);
+  ok(cards.length === live.length, `列表卡片数 == 非草稿文章数（${cards.length} vs ${live.length}）`);
+  const withThumb = cards.filter((c) => c.includes('post-card-cover'));
+  ok(withThumb.length === withCover.length,
+    `带头图的卡片才渲染缩略图（${withThumb.length} vs ${withCover.length}）`);
+  ok(withoutCover.length > 0 && cards.length - withThumb.length === withoutCover.length,
+    '没 cover 的卡片不出现缩略图空位');
+  ok(withThumb.every((c) => /referrerpolicy="no-referrer"/.test(c)),
+    '缩略图带 referrerpolicy="no-referrer"');
+  const listCss = blogInlineCss + allCss;
+  ok(/\.post-card-cover[^{]*\{[^}]*width:\s*96px[^}]*height:\s*64px/.test(listCss),
+    '缩略图尺寸写死（有无头图都不改变卡片高度）');
+}
+
 console.log('\n[2] 排序：日期倒序');
 const dates = [...essays.matchAll(/news-item-date"[^>]*>([\d-]+)</g)].map((m) => m[1]);
 console.log('     ', dates.join('  '));

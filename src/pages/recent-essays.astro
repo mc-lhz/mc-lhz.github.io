@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import { coverSrc } from '../lib/cover';
 
 // 这个页面是给首页随笔区用 iframe 嵌入的：
 // 独立成页 → 随笔区的渲染/交互逻辑（列表、预览卡联动、样式）不污染首页那份静态 index.html，
@@ -9,11 +10,17 @@ const posts = (await getCollection('blog'))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
   .slice(0, 5);
 
+// 每篇的头图 src（未指定 cover 时为 undefined → 显示占位符，不留空位）
+const covers = posts.map((p) => coverSrc(p.data.cover));
+// 只要有一篇带头图就渲染 <img>，切换到没图的篇目时用 hidden 藏起来
+const anyCover = covers.some(Boolean);
+
 // 首页按本地时区格式化，避免 toISOString 的 UTC 偏移导致日期差一天
 const fmtDate = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 const first = posts[0];
+const firstCover = first ? covers[posts.indexOf(first)] : undefined;
 ---
 
 <!doctype html>
@@ -158,7 +165,18 @@ const first = posts[0];
         background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 50%, #e0f2fe 100%);
         display: flex; align-items: center; justify-content: center;
     }
+    /* 有 cover 时显示头图。高度固定 290px + object-fit: cover，
+       所以换图不会改变卡片高度，父页的高度上报逻辑不受影响。
+       底色保留在 .news-preview-cover 上，外链图没加载出来时不会开天窗。 */
+    .news-preview-cover img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+    }
+    .news-preview-cover img[hidden] { display: none; }
     .news-preview-cover .cover-placeholder { text-align: center; padding: 24px; color: var(--primary); }
+    .news-preview-cover .cover-placeholder[hidden] { display: none; }
     .news-preview-cover .cover-placeholder i { font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.7; }
     .news-preview-cover .cover-placeholder span { font-size: 18px; font-weight: 600; letter-spacing: 2px; }
     .news-preview-info {
@@ -210,6 +228,7 @@ const first = posts[0];
             <a
                 class:list={['news-item', { active: i === 0 }]}
                 data-index={i}
+                data-cover={covers[i] ?? ''}
                 href={`/blog/${post.id}/`}
                 target="_blank"
                 rel="noopener"
@@ -235,7 +254,17 @@ const first = posts[0];
         {first && (
             <a class="news-preview-card preview-shown" id="newsPreview" href={`/blog/${first.id}/`} target="_blank" rel="noopener">
                 <div class="news-preview-cover">
-                    <div class="cover-placeholder">
+                    {anyCover && (
+                        <img
+                            id="newsCover"
+                            src={firstCover ?? ''}
+                            alt=""
+                            referrerpolicy="no-referrer"
+                            decoding="async"
+                            hidden={!firstCover}
+                        />
+                    )}
+                    <div class="cover-placeholder" hidden={anyCover && !!firstCover}>
                         <span aria-hidden="true">📝</span>
                         <span>{first.data.previewText ?? first.data.title}</span>
                     </div>
@@ -256,6 +285,22 @@ const first = posts[0];
     // 点击/键盘激活某一条 → 右侧预览卡淡出淡入切换（与首页原行为一致）
     var newsItems = document.querySelectorAll('#newsList .news-item');
     var preview = document.getElementById('newsPreview');
+    var coverImg = document.getElementById('newsCover');
+    var coverBox = preview && preview.querySelector('.news-preview-cover');
+    var placeholder = coverBox && coverBox.querySelector('.cover-placeholder');
+
+    // 切到指定头图；空值或加载失败都退回占位符，不留空位
+    function showCover(src) {
+        if (!coverImg || !placeholder) return;
+        if (!src) {
+            coverImg.hidden = true;
+            placeholder.hidden = false;
+            return;
+        }
+        placeholder.hidden = true;
+        if (coverImg.getAttribute('src') !== src) coverImg.setAttribute('src', src);
+        coverImg.hidden = false;
+    }
 
     newsItems.forEach(function (item) {
         function activate() {
@@ -276,6 +321,7 @@ const first = posts[0];
                 if (d && date) d.textContent = date.textContent;
                 if (cover && title) cover.textContent = title.textContent;
                 if (href) preview.setAttribute('href', href);
+                showCover(item.getAttribute('data-cover') || '');
                 preview.classList.remove('preview-fading');
                 preview.classList.add('preview-shown');
                 reportHeight(); // 切换后行高变化，高度要重新报
@@ -318,6 +364,21 @@ const first = posts[0];
         document.fonts.ready.then(reportHeight);
     }
     reportHeight();
+
+    /* —— 头图预热 + 容错 ——
+       切换条目时直接改 src 会先闪一下空白，所以先把用到的图拉进缓存。
+       外链图随时可能挂，onerror 一律退回占位符。 */
+    if (coverImg) {
+        coverImg.addEventListener('error', function () { showCover(''); });
+        coverImg.addEventListener('load', function () { reportHeight(); });
+    }
+    newsItems.forEach(function (item) {
+        var src = item.getAttribute('data-cover');
+        if (!src) return;
+        var pre = new Image();
+        pre.referrerPolicy = 'no-referrer'; // 与 <img> 上的属性一致，外链图床少一道 referrer
+        pre.src = src;
+    });
 </script>
 
 </body>

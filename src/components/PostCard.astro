@@ -5,30 +5,46 @@ interface Props {
   date: Date;
   description?: string;
   tags?: string[];
+  cover?: string;
 }
 
-const { href, title, date, description, tags = [] } = Astro.props;
+const { href, title, date, description, tags = [], cover } = Astro.props;
 
 const fmt = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 ---
 
 <a class="post-card" href={href}>
-  <div class="post-card-head">
-    <h3 class="post-card-title">{title}</h3>
-    <span class="post-card-date">{fmt(date)}</span>
-  </div>
-  {description && <p class="post-card-desc">{description}</p>}
-  {tags.length > 0 && (
-    <div class="post-card-tags">
-      {tags.map((t) => <span>#{t}</span>)}
-    </div>
+  {/* 有头图才渲染缩略图；没写 cover 时不占位，布局与从前完全一致 */}
+  {cover && (
+    <img
+      class="post-card-cover"
+      src={cover}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      referrerpolicy="no-referrer"
+    />
   )}
+  <div class="post-card-body">
+    <div class="post-card-head">
+      <h3 class="post-card-title">{title}</h3>
+      <span class="post-card-date">{fmt(date)}</span>
+    </div>
+    {description && <p class="post-card-desc">{description}</p>}
+    {tags.length > 0 && (
+      <div class="post-card-tags">
+        {tags.map((t) => <span>#{t}</span>)}
+      </div>
+    )}
+  </div>
 </a>
 
 <style>
   .post-card {
-    display: block;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
     padding: 20px 24px;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -42,6 +58,19 @@ const fmt = (d: Date) =>
     border-color: rgba(60, 128, 240, .4);
     box-shadow: 0 6px 20px rgba(26, 35, 50, .08);
   }
+
+  /* 尺寸写死 + object-fit: cover：有无头图都不会改变卡片高度 */
+  .post-card-cover {
+    width: 96px;
+    height: 64px;
+    flex-shrink: 0;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #e8f0fe, #f2f7ff);
+    display: block;
+  }
+  .post-card-body { flex: 1; min-width: 0; }
 
   .post-card-head {
     display: flex;
@@ -70,5 +99,6 @@ const fmt = (d: Date) =>
 
   @media (max-width: 640px) {
     .post-card-head { flex-direction: column; gap: 4px; }
+    .post-card-cover { width: 64px; height: 44px; }
   }
 </style>
