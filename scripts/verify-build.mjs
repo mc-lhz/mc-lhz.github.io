@@ -183,6 +183,32 @@ console.log('\n[1b] 文章头图 cover');
     '缩略图尺寸写死（有无头图都不改变卡片高度）');
 }
 
+console.log('\n[1c] 随笔区 hover 联动');
+{
+  // 这套交互曾经丢过一次：iframe 改造时把 hover 联动换成了点击切换，
+  // 而 CSS 里留着 `.news-item:hover { height: 68px }` —— 与基线同高，等于空规则，
+  // 于是「展开 + 预览联动」静默失效。断言要盯住这两点。
+  const allCss = readdirSync(`${D}/_astro`).filter((f) => f.endsWith('.css'))
+    .map((f) => readFileSync(`${D}/_astro/${f}`, 'utf8')).join('\n');
+  const css = allCss;
+
+  ok(/\.news-item[^{}]*:is\(\s*:hover\s*,\s*\.active\s*\)/.test(css),
+    'hover 与 active 合并为展开态（:is(:hover, .active)）');
+  ok(!/\.news-item[^{}]*:hover[^{}]*\{[^}]*height:\s*68px/.test(css),
+    '没有与基线同高的空 hover 规则（68px == 基线，hover 看不出效果）');
+  ok(/\.news-item[^{}]*:is\([^{]*\)[^{}]*\{[^}]*height:\s*128px/.test(css),
+    '展开高度 128px');
+
+  // JS：hover 驱动 + 去抖；click 不得拦截（否则点击语义被改）
+  ok(/mouseenter/.test(essays), 'mouseenter 驱动切换（不是 mouseover）');
+  ok(/mouseleave/.test(essays), '整块列表移出后回到第一条');
+  ok(/touchstart/.test(essays), '触摸设备用 touchstart 同步（无 hover）');
+  ok(/focus/.test(essays), '键盘 focus 同步预览');
+  ok(!/preventDefault/.test(essays),
+    'click/keydown 不再 preventDefault —— 点击与回车交给 <a target="_blank"> 跳转');
+  ok(/clearTimeout/.test(essays), '快速划过时clearTimeout，不堆叠淡入动画');
+}
+
 console.log('\n[2] 排序：日期倒序');
 const dates = [...essays.matchAll(/news-item-date"[^>]*>([\d-]+)</g)].map((m) => m[1]);
 console.log('     ', dates.join('  '));

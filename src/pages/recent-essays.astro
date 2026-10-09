@@ -92,30 +92,34 @@ const firstCover = first ? covers[posts.indexOf(first)] : undefined;
         border-radius: 14px;
         transition: background 0.35s ease;
     }
-    .news-item:hover { height: 68px; }
-    .news-item:hover::before { background: rgba(255, 255, 255, 0.55); }
-    .news-item:hover .news-item-arrow { opacity: 1; transform: translateX(0); }
-    .news-item:hover .news-item-index { width: 36px; height: 36px; font-size: 14px; }
-    .news-item:hover .news-item-title { font-size: 15px; white-space: normal; }
-    .news-item:hover .news-item-date { opacity: 1; }
-
-    .news-item.active { height: 128px; }
-    .news-item.active::before {
+    /* 展开态：:hover 与 .active 任一成立。
+       原来这里是 `.news-item:hover { height: 68px }` —— 与基线 68px 相同，等于空规则，
+       展开动画（->128px）只绑在 .active 上，于是 hover 看不到任何效果。
+       现在改为 hover 即展开，并由 JS 联动右侧预览；点击仍负责跳转文章。 */
+    .news-item:is(:hover, .active) { height: 128px; }
+    .news-item:is(:hover, .active)::before {
         background: linear-gradient(348deg, #c3d4ed00, #c0d5ff85);
         box-shadow: 0 4px 20px rgba(31, 38, 135, 0.08), 0 0 0 1px rgba(60, 128, 240, 0.12);
     }
-    .news-item.active .news-item-index {
-        width: 42px; height: 42px; font-size: 14px;
+    .news-item:is(:hover, .active) .news-item-index {
+        width: 42px;
+        height: 42px;
+        font-size: 14px;
         background: linear-gradient(135deg, #3c80f0, #5a9bff);
         color: #fff;
     }
-    .news-item.active .news-item-title {
-        font-size: 18px !important;
+    .news-item:is(:hover, .active) .news-item-title {
+        font-size: 18px;
         font-weight: 600;
         color: #3c80f0;
         white-space: normal;
     }
-    .news-item.active .news-item-arrow { opacity: 1; transform: translateX(0); color: #3c80f0; }
+    .news-item:is(:hover, .active) .news-item-date { opacity: 1; }
+    .news-item:is(:hover, .active) .news-item-arrow {
+        opacity: 1;
+        transform: translateX(0);
+        color: #3c80f0;
+    }
 
     .news-item-index {
         width: 28px; height: 28px;
@@ -302,41 +306,74 @@ const firstCover = first ? covers[posts.indexOf(first)] : undefined;
         coverImg.hidden = false;
     }
 
-    newsItems.forEach(function (item) {
-        function activate() {
-            if (item.classList.contains('active') || !preview) return;
-            newsItems.forEach(function (x) { x.classList.remove('active'); });
-            item.classList.add('active');
+    /* hover 驱动：移入哪一条，右侧预览就跟到哪一条。
+       newsCurrent 去重 + clearTimeout —— 快速划过时不会堆叠淡入动画。 */
+    var newsCurrent = -1;
+    var newsSwapTimer = null;
 
-            var title = item.querySelector('.news-item-title');
-            var date = item.querySelector('.news-item-date');
-            preview.classList.remove('preview-shown');
-            preview.classList.add('preview-fading');
-            setTimeout(function () {
-                var t = preview.querySelector('.news-preview-title');
-                var d = preview.querySelector('.news-preview-date');
-                var cover = preview.querySelector('.cover-placeholder span:last-child');
-                var href = item.getAttribute('href');
-                if (t && title) t.textContent = title.textContent;
-                if (d && date) d.textContent = date.textContent;
-                if (cover && title) cover.textContent = title.textContent;
-                if (href) preview.setAttribute('href', href);
-                showCover(item.getAttribute('data-cover') || '');
-                preview.classList.remove('preview-fading');
-                preview.classList.add('preview-shown');
-                reportHeight(); // 切换后行高变化，高度要重新报
-            }, 350);
-        }
+    function newsActivate(idx) {
+        if (idx === newsCurrent || !preview) return;
+        newsCurrent = idx;
+        if (newsSwapTimer) clearTimeout(newsSwapTimer);
 
-        item.addEventListener('click', function (e) {
-            // 已激活的条目照常跳文章；未激活的先切预览，不跳转
-            if (!item.classList.contains('active')) { e.preventDefault(); }
-            activate();
+        newsItems.forEach(function (x, k) { x.classList.toggle('active', k === idx); });
+
+        var item = newsItems[idx];
+        var title = item.querySelector('.news-item-title');
+        var date = item.querySelector('.news-item-date');
+        preview.classList.remove('preview-shown');
+        preview.classList.add('preview-fading');
+        newsSwapTimer = setTimeout(function () {
+            var t = preview.querySelector('.news-preview-title');
+            var d = preview.querySelector('.news-preview-date');
+            var ph = preview.querySelector('.cover-placeholder span:last-child');
+            if (t && title) t.textContent = title.textContent;
+            if (d && date) d.textContent = date.textContent;
+            if (ph && title) ph.textContent = title.textContent;
+            showCover(item.getAttribute('data-cover') || '');
+            preview.classList.remove('preview-fading');
+            preview.classList.add('preview-shown');
+            // 展开态让列表高 60px，iframe 高度要跟着重报，否则父页会留空/截断
+            reportHeight();
+        }, 350);
+    }
+
+    function newsSyncPreviewHref() {
+        var item = newsItems[newsCurrent];
+        if (item && preview) preview.setAttribute('href', item.getAttribute('href') || '#');
+    }
+
+    var newsList = document.getElementById('newsList');
+    newsItems.forEach(function (item, i) {
+        // mouseenter 而非 mouseover：避免在子元素间移动时反复触发
+        item.addEventListener('mouseenter', function () {
+            newsActivate(i);
+            newsSyncPreviewHref();
         });
-        item.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+        // 键盘可达：Tab 聚焦到哪一条，预览就跟到哪一条（回车由 <a> 自行跳转）
+        item.addEventListener('focus', function () {
+            newsActivate(i);
+            newsSyncPreviewHref();
         });
+        // 触摸设备没有 hover，点一下时先同步预览，但不阻止 <a> 的跳转
+        item.addEventListener('touchstart', function () {
+            newsActivate(i);
+            newsSyncPreviewHref();
+        });
+        // 点击不做任何拦截：交给 <a target="_blank"> 直接打开文章
     });
+
+    // 整块列表移出后回到第一条
+    if (newsList) {
+        newsList.addEventListener('mouseleave', function () {
+            newsActivate(0);
+            newsSyncPreviewHref();
+        });
+    }
+
+    // 初始化：确保第一条是 active、预览卡链接正确
+    newsActivate(0);
+    newsSyncPreviewHref();
 
     /* —— 高度上报：让父页把 iframe 定到内容高度，避免内部出现滚动条 —— */
     function reportHeight() {
