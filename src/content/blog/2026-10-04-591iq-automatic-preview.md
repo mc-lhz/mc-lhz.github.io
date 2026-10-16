@@ -4,7 +4,6 @@ description: 把综评数据一次导出成表、把写实记录一次填好提�
 pubDate: 2026-10-04
 draft: false
 tags: [591iq, 新壹我, 综评, 自动化, Skill]
-cover: https://www.591iq.cn/img/juniorMiddleSchoo.562c158b.png
 ---
 
 新壹我自动化工具集预览版上线了。这是一套针对**新壹我（天蛙）综合素质评价系统**（`www.591iq.cn`）的 Python 自动化工具：**把综评数据一次导出成表、把写实记录一次填好提交**。

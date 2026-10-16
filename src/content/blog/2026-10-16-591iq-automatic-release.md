@@ -4,6 +4,7 @@ description: 新壹我自动化 Skill v1.0 正式版发布，为综评提交的�
 pubDate: 2026-10-16
 tags: [591iq, 新壹我, 综评, 自动化, Skill]
 draft: false
+cover: https://www.591iq.cn/img/juniorMiddleSchoo.562c158b.png
 ---
 
 # 把一件没意义的事，变得有意义——新壹我自动化 Skill v1.0 正式版发布
